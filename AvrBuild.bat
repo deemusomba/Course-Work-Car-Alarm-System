@@ -1,0 +1,2 @@
+@ECHO OFF
+"C:\Program Files (x86)\Atmel\AVR Tools\AvrAssembler2\avrasm2.exe" -S "H:\HomeWork\course work asm\project128\labels.tmp" -fI -W+ie -C V2E -o "H:\HomeWork\course work asm\project128\project128.hex" -d "H:\HomeWork\course work asm\project128\project128.obj" -e "H:\HomeWork\course work asm\project128\project128.eep" -m "H:\HomeWork\course work asm\project128\project128.map" "H:\HomeWork\course work asm\project128\project128.asm"
