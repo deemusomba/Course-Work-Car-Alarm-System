@@ -1,121 +1,96 @@
-;=========== LCD Define ==================================================================
-			.equ	DATA_PORT	= PORTE	; LCD Data Port
-			.equ	DATA_PIN	= PINE
-			.equ	DATA_DDR	= DDRE
 
-			.equ	CMD_PORT	= PORTB	; LCD Control Port
-			.equ	CMD_PIN		= PINB
-			.equ	CMD_DDR		= DDRB
+CMD_WR:		; Запись команды в дисплей. Код команды в R17
+			CLI
+			RCALL	BusyWait
 
-			.equ	E		= 7
-			.equ	RW		= 5
-			.equ	RS		= 6
+			CBI		PORTB,6; снятие E
+			RJMP	WR_END
 
-			.equ	SPEED	= 6	; 14 для XTAL=16MHz, 10 для XTAL=8MHz,  
-									; 6 для XTAL=4MHz, 5 для XTAL<4MHz
-;=========================================================================================
-;=========== LCD Proc ====================================================================
-InitHW:		CBI		CMD_PORT,RS
-			CBI		CMD_PORT,RW
-			CBI		CMD_PORT,E
-
-			SBI		CMD_DDR,RS
-			SBI		CMD_DDR,RW
-			SBI		CMD_DDR,E
+DATA_WR:	; Запись данных в дисплей. Код данных в R17
+			CLI
+			RCALL	BusyWait
 			
-			RCALL PortIn
-			RET
+			SBI		PORTB,6; установка RW;SBI		PORTB,6; установка RW
+WR_END:		
+			CBI		PORTB,5; снятие Е
+			SBI		PORTB,7; установка флага записи в DDRAM 
+			
+			LDI		R16,0xFF
+			OUT		DDRE,R16; установка порта на вывод
+			OUT		PORTE,R17; подтяжка
 
-;=========================================================================================
+			RCALL	LCD_Delay
+
+			CBI		PORTB,7
+
+			LDI		R16,0		; LCD Data Port
+			OUT		DDRE,R16	; Выставить на вход
+
+			LDI		R16,0xFF	; Установить подтяжку
+			OUT		PORTE,R16
+
+			SEI
+			RET
 BusyWait:	
-			CBI		CMD_PORT,RS
-			SBI		CMD_PORT,RW
-BusyLoop:	SBI		CMD_PORT,E
+			CBI		PORTB,6
+			SBI		PORTB,5
+
+BusyLoop:	SBI		PORTB,7
 			
 			RCALL	LCD_Delay
 
-			IN		R16,DATA_PIN   ; чтение в R16 из порта B
+			IN		R16,PINE   ; чтение в R16 из порта B
 
-            CBI		CMD_PORT,E     ; вот только теперь снимаем E
+            CBI		PORTB,7    ; снимаем E
                       	
-            ANDI	R16,0x80               ; проверка флага BF на 0
+            ANDI	R16,0x80   ; проверка флага BF на 0
 			BRNE	BusyLoop
 			RET
-;=========================================================================================	
-LCD_Delay:	LDI		R16,SPEED
+		
+LCD_Delay:	LDI		R16,6
 L_loop:		DEC		R16
 			BRNE	L_loop
 			RET
 
-;=========================================================================================
-; Запись команды в дисплей. Код команды в R17
-CMD_WR:		
-			CLI
-			RCALL	BusyWait
+DATA_WR_from_Z:	;в Z адрес массива с данными
+DATA_WR_from_Z_loop:
+			lpm
+			mov 	acc, r0
+			cpi 	acc, 'e'
+			breq 	DATA_WR_from_Z_exit
+	
+			cpi 	acc, 0x0f
+			brlo 	DATA_WR_from_Z_coords
+	
+			RCALL 	symToHex
+			mov		r17, acc
 
-			CBI		CMD_PORT,RS
-			RJMP	WR_END
+			RCALL	DATA_WR
+			adiw 	ZL, 1
 
-;-----------------------------------------------------------------------------------------
-; Запись данных в дисплей. Код данных в R17
-DATA_WR:	
-			CLI
-			RCALL	BusyWait
-			
-			SBI		CMD_PORT,RS
-WR_END:		
-			CBI		CMD_PORT,RW			
-			SBI		CMD_PORT,E	
-			
-			RCALL PortOut
-			OUT		DATA_PORT,R17
+			jmp 	DATA_WR_from_Z_loop
 
-			RCALL	LCD_Delay
+DATA_WR_from_Z_coords:	
+			adiw 	ZL, 1
+			lpm
 
-			CBI		CMD_PORT,E
-			RCALL PortIn
+			mov 	R17, r0
+			ORI		R17,(1<<7)
+	
+			cpi 	acc, 1
+			breq 	DATA_WR_from_Z_row1
 
-			SEI
-			RET
+DATA_WR_from_Z_coodsDone: 
+			RCALL 	CMD_WR
+			adiw 	ZL, 1
+			jmp 	DATA_WR_from_Z_loop
 
-;=========================================================================================
-; Чтение команды из дисплея. Результат в R17
-CMD_RD:		CLI
-			RCALL	BusyWait
+DATA_WR_from_Z_exit:
+			ret
 
-			CBI		CMD_PORT,RS
-			
-			RJMP	RD_END
-
-;-----------------------------------------------------------------------------------------
-; Чтение команды из дисплея. Результат в R17
-DATA_RD:	CLI
-			RCALL	BusyWait
-		;	LCD_PORT_IN					;
-
-			SBI		CMD_PORT,RS
-RD_END:		SBI		CMD_PORT,RW
-
-			SBI		CMD_PORT,E
-			RCALL	LCD_Delay
-			IN		R17,DATA_PIN
-			CBI		CMD_PORT,E
-			
-			SEI
-			RET
-
-;=========================================================================================
-PortIn:		LDI		R16,0			; LCD Data Port
-			OUT		DATA_DDR,R16	; Выставить на вход
-
-			LDI		R16,0xFF		; Установить подтяжку
-			OUT		DATA_PORT,R16
-			RET		
-
-PortOut:
-			LDI		R16,0xFF
-			OUT		DATA_DDR,R16
-			RET
+DATA_WR_from_Z_row1:
+			ORI 	R17, 0x40
+			jmp 	DATA_WR_from_Z_coodsDone
 
 
-; Fill Screen ============================================================================
+	

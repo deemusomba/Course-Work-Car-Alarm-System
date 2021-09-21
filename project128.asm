@@ -7,7 +7,8 @@
 .def keyRow=R20;
 .def menuModes=R21;старшая часть отвечает за пункты меню, младшая - за подпункты
 .def acc=R16;аккумулятор
-.def programFlags=R22; 0|0|0|0|0|updateDisplay|DebouncingEnd|keyPress
+.def acc2=R17;вспомогательный регистр для передачи данных между блоками
+.def programFlags=R22; 0|0|0|0|inMode|updateDisplay|DebouncingEnd|keyPress
 .def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|0|keyScan|msAdd|0
 .def prK=R5; pressed key
 .def keyboardPointer=R24
@@ -59,6 +60,7 @@ SevenSegmentValues:
 .include "LCD_macro.inc"
 .include "LCD.asm"
 .include "symToHexConverter.asm"
+.include "modes.asm"
 start:
 	ldi acc,low(ramend)
 	out spl,acc
@@ -69,7 +71,7 @@ start:
 	ldi keyRow, 0x04; по кол-ву строк - 4
 	ldi programFlags, 0x04
 	ldi RTTFlags, 0x00
-	ldi commands, 0x00
+	ldi menuModes, 0x00; точка входа - главная страница
 	ldi acc,0xF0
 	out ddrc, acc; младшая тетрада порта C на ввод,старшая - на вывод
 	ldi acc, 0xFF
@@ -133,6 +135,7 @@ start:
 
 ;для отладочных вещей
 backdoor:
+	
 	ldi r16, 0x00
 	cpi r16, 0x00
 	;brne backgroundLoop
@@ -184,35 +187,30 @@ backLoopAfterRTTFlagsScan:
 
 updateDisplay:
 	cbr programFlags,4; очистка флага "обновить дисплей"
-
+		
 	LDI R17,(1<<0)
-	RCALL CMD_WR	
-
-	;LDI	R17,(1<<LCD_DDRAM)|(0+0x40*1); x, y
-	;RCALL CMD_WR
+	RCALL CMD_WR; очистка дисплея
 	
-	ldi acc, LOW(_labelTest<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelTest<<1)
-	mov ZH, acc
 
-loop:
-	lpm
-	mov acc, r0
+	;где-то в этой функции надо чекать флаг inMode (8) и показывать меню, которое уже было выбрано тем самым
+
+	mov acc, menuModes
+	andi acc, 0xf0
+	lsr acc
+	lsr acc
+	lsr acc
+	lsr acc
 	cpi acc, 0
-	breq exitLoop
-
-	RCALL symToHex
-	mov r17, acc
-
-	RCALL	DATA_WR
-	adiw ZL, 1
-
-	jmp loop
+	breq udpDisp0
+	cpi acc, 1
+	breq updDisp1
 	
-exitLoop:
+udpDisp0:
+	call modeMain
 	ret
-
+updDisp1:
+	call modeSettings
+	ret
 ;-----КЛАВИАТУРА-----;
 
 ;входная точка перебора строк клавиатуры
@@ -311,22 +309,84 @@ keyRowFoundLoop:
 keyFound:
 	;кнопка найдена
 	lpm
-	mov prK, r0
-
-	;тут какая-то логика для кнопок
-	ldi commands, 1; функция вывода на индикатор
-
-	;ldi scan, 0b00010001
 	cbr programFlags, 2
+	
+	;тут какая-то логика для кнопок	
+	mov acc, r0
+	cpi acc, 10
+	brge keyFoundLetters
+	call keyFoundNumbers
 
+keyFoundContinue:
 	ldi acc, 0
 	STS KeyScanTimer, acc
 	cbr RTTFlags, 2
-	nop	
 
 	jmp backgroundLoop
-;-----КЛАВИАТУРА-----;
 
+keyFoundNumbers:
+	mov acc, menuModes
+	andi acc, 0xF0
+	cpi acc, 0; если левая часть (режим) == 0, то вводим его
+	breq keyFoundEnterMode
+	mov acc, menuModes
+	andi acc, 0x0F
+	cpi acc, 0
+	breq keyFoundEnterSubMode
+	call keyFoundEnteringInModes
+	ret
+
+keyFoundEnterMode:
+	mov acc, r0
+	cpi acc, 0x06; количество режимов, но +1
+	brge keyFoundContinue
+	mov acc, r0
+	andi menuModes, 0x0F
+	lsl acc
+	lsl acc
+	lsl acc
+	lsl acc
+	add menuModes, acc
+	jmp keyFoundContinue
+keyFoundEnterSubMode:
+	mov acc, r0
+	andi menuModes, 0xF0
+	add menuModes, acc
+	jmp keyFoundContinue
+	
+keyFoundLetters:
+	mov acc, r0
+	cpi acc, 0x0A
+	breq keyFoundLetterA
+	cpi acc, 0x0B
+	breq keyFoundLetterB	
+	jmp keyFoundContinue
+
+keyFoundLetterA:
+	sbr programFlags, 8
+	jmp keyFoundContinue
+keyFoundLetterB:
+	mov acc, menuModes
+	cpi acc, 0
+	breq keyFoundContinue
+
+	mov acc, menuModes
+	andi acc, 0x0f
+	cpi acc, 0
+	breq keyFoundBackFromMode
+	
+	andi menuModes, 0xf0
+	cbr programFlags, 8
+	jmp keyFoundContinue
+keyFoundBackFromMode:
+	ldi menuModes, 0x00
+	jmp keyFoundContinue	
+
+keyFoundEnteringInModes:
+	ret
+	
+;-----КЛАВИАТУРА-----;
+;--------ЧАСЫ--------;
 RTT_1msInt:
 	ldi acc, 0x00
 	CLI; запрет прерываний
@@ -446,6 +506,7 @@ RTT_continue:
 
 RTT_end2:
 	jmp backLoopAfterRTTFlagsScan
+;--------ЧАСЫ--------;
 
 carScanning:
 	jmp backLoopAfterCarScan
@@ -474,7 +535,9 @@ carScanAlarm:
 	;ldi acc, 0x01
 	;out PINB, acc
 	
-_labelHelloWorld:
-.DB 'П','Р','И','В','Е','Т',',',' ','М','И','Р', 0
 _labelTest:
-.DB 'Н', 'Е', 'С', 'Т', 'Е', 'Р', 'У', 'К', ' ','1', ' ', 'L' , 'O', 'V', 'E', 0
+.DB 'П','Р','И','В','Е','Т',',',1,7,'М',0,8,'И',1,9,'Р',0,10,'!','e'
+_labelMainMenu:
+.DB '0','0',':','0','0',':','0','0','e'
+_labelMenu1:
+.DB '1','.','У','С','Т','А','Н','О','В','К','И',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
