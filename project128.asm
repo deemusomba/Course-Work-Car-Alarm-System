@@ -60,7 +60,8 @@ SevenSegmentValues:
 .include "LCD_macro.inc"
 .include "LCD.asm"
 .include "symToHexConverter.asm"
-.include "modes.asm"
+.include "keyboardProcessing.asm"
+.include "displayingInfo.asm"
 start:
 	ldi acc,low(ramend)
 	out spl,acc
@@ -161,13 +162,6 @@ backLoopAfterKeyScan:
 	sbrc programFlags, 1
 	jmp keyboardColumnDetection; определение кнопки
 
-backLoopFlag2:
-	;jmp displaySigments;отображение значений на индикаторах
-
-backLoopAfterDispSigms:
-	;cpi commands, 0; если 0, то ни одна команда не выбрана
-	;brne operationScanning; обработка команд
-
 backLoopAfterOpScan:
 	sbrc RTTFlags, 0; если 0, то флаги не установлены, пропустить
 	jmp RTT_main
@@ -188,28 +182,7 @@ backLoopAfterRTTFlagsScan:
 updateDisplay:
 	cbr programFlags,4; очистка флага "обновить дисплей"
 		
-	LDI R17,(1<<0)
-	RCALL CMD_WR; очистка дисплея
-	
-
-	;где-то в этой функции надо чекать флаг inMode (8) и показывать меню, которое уже было выбрано тем самым
-
-	mov acc, menuModes
-	andi acc, 0xf0
-	lsr acc
-	lsr acc
-	lsr acc
-	lsr acc
-	cpi acc, 0
-	breq udpDisp0
-	cpi acc, 1
-	breq updDisp1
-	
-udpDisp0:
-	call modeMain
-	ret
-updDisp1:
-	call modeSettings
+	call updatingDisplay
 	ret
 ;-----КЛАВИАТУРА-----;
 
@@ -310,80 +283,14 @@ keyFound:
 	;кнопка найдена
 	lpm
 	cbr programFlags, 2
-	
-	;тут какая-то логика для кнопок	
-	mov acc, r0
-	cpi acc, 10
-	brge keyFoundLetters
-	call keyFoundNumbers
 
-keyFoundContinue:
+	call keyBindings	
+
 	ldi acc, 0
 	STS KeyScanTimer, acc
 	cbr RTTFlags, 2
 
 	jmp backgroundLoop
-
-keyFoundNumbers:
-	mov acc, menuModes
-	andi acc, 0xF0
-	cpi acc, 0; если левая часть (режим) == 0, то вводим его
-	breq keyFoundEnterMode
-	mov acc, menuModes
-	andi acc, 0x0F
-	cpi acc, 0
-	breq keyFoundEnterSubMode
-	call keyFoundEnteringInModes
-	ret
-
-keyFoundEnterMode:
-	mov acc, r0
-	cpi acc, 0x06; количество режимов, но +1
-	brge keyFoundContinue
-	mov acc, r0
-	andi menuModes, 0x0F
-	lsl acc
-	lsl acc
-	lsl acc
-	lsl acc
-	add menuModes, acc
-	jmp keyFoundContinue
-keyFoundEnterSubMode:
-	mov acc, r0
-	andi menuModes, 0xF0
-	add menuModes, acc
-	jmp keyFoundContinue
-	
-keyFoundLetters:
-	mov acc, r0
-	cpi acc, 0x0A
-	breq keyFoundLetterA
-	cpi acc, 0x0B
-	breq keyFoundLetterB	
-	jmp keyFoundContinue
-
-keyFoundLetterA:
-	sbr programFlags, 8
-	jmp keyFoundContinue
-keyFoundLetterB:
-	mov acc, menuModes
-	cpi acc, 0
-	breq keyFoundContinue
-
-	mov acc, menuModes
-	andi acc, 0x0f
-	cpi acc, 0
-	breq keyFoundBackFromMode
-	
-	andi menuModes, 0xf0
-	cbr programFlags, 8
-	jmp keyFoundContinue
-keyFoundBackFromMode:
-	ldi menuModes, 0x00
-	jmp keyFoundContinue	
-
-keyFoundEnteringInModes:
-	ret
 	
 ;-----КЛАВИАТУРА-----;
 ;--------ЧАСЫ--------;
@@ -540,4 +447,11 @@ _labelTest:
 _labelMainMenu:
 .DB '0','0',':','0','0',':','0','0','e'
 _labelMenu1:
-.DB '1','.','У','С','Т','А','Н','О','В','К','И',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
+.DB '1','.','У','С','Т','А','Н','О','В','К','И',1,0,'A','-','В','О','Й','T','И',' ',' ','B','-','Н','А','З','А','Д','e'
+_labelMenu11:
+.DB '1','.','1',' ','В','Р','Е','М','Я',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
+_labelMenu11In:
+.DB 'В','Р','Е','М','Я',' ','0','0',':','0','0',':','0','0',1,0,'П','В','С','Ч','П','С','В',' ',' ','А','-','V',' ','B','-','X','e'
+_labelMenu2:
+.DB '2','.','А','В','Т','О','П','О','Д','О','Г','Р','Е','В',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
+
