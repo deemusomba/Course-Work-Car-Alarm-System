@@ -27,7 +27,11 @@ RTT_24H: .BYTE 1;подсчет суток в целом
 KeyScanTimer: .BYTE 1; таймер для дребезга клавиатуры 
 
 KeyTablePointer: .BYTE 1; указатель на таблицу с клавиатурой
-SevSegPointer: .BYTE 1; указатель на таблицу со значениями семисигментного индикатора //TODO: удалить
+;SevSegPointer: .BYTE 1; указатель на таблицу со значениями семисигментного индикатора //TODO: удалить
+
+AccReserve: .BYTE 1; сохранить аккумулятор перед тем, как изменять его в прерываниях 
+
+
 
 .cseg
 
@@ -51,12 +55,13 @@ KeyTable:
 .DB 0x0F,0x0A,0x00,0x0B ; B, 0, A, F
 
 ; dp|g|f|e| d|c|b|a|
-SevenSegmentValues:
-.DB 0xC0,0xF9,0xA4,0xB0 ; 0, 1, 2, 3  |-a-|
-.DB 0x99,0x92,0x82,0xF8 ; 4, 5, 6, 7  f   b
-.DB 0x80,0x90,0x88,0x83 ; 8, 9, A. B  |-g-|
-.DB 0xC6,0xA1,0x86,0x8E ; C, D, E, F  e   c
-						;             |-d-| dp
+;SevenSegmentValues:
+;.DB 0xC0,0xF9,0xA4,0xB0 ; 0, 1, 2, 3  |-a-|
+;.DB 0x99,0x92,0x82,0xF8 ; 4, 5, 6, 7  f   b
+;.DB 0x80,0x90,0x88,0x83 ; 8, 9, A. B  |-g-|
+;.DB 0xC6,0xA1,0x86,0x8E ; C, D, E, F  e   c
+						;              |-d-| dp
+
 .include "LCD_macro.inc"
 .include "LCD.asm"
 .include "symToHexConverter.asm"
@@ -109,8 +114,8 @@ start:
 	ldi acc, LOW(KeyTable<<1)
 	STS KeyTablePointer, acc	
 	
-	ldi acc, LOW(SevenSegmentValues<<1)
-	STS SevSegPointer, acc		
+	;ldi acc, LOW(SevenSegmentValues<<1)
+	;STS SevSegPointer, acc		
 
 	ldi acc, 0x01
 	out pind, acc;  если 1 в младшем бите, то не нажато	  	
@@ -142,12 +147,23 @@ backdoor:
 	;brne backgroundLoop
 
 bkdr:
+	;ldi acc, LOW(_labelTest<<1)
+	;mov ZL, acc
+	;ldi acc, HIGH(_labelTest<<1)
+	;mov ZH, acc
+;a:	;lpm
+	;mov acc, r0
+	;inc zl
+	
+
+	;call symToHex
+	;jmp a
 	jmp backgroundLoop
 
 ;-----главный цикл обработки флагов-----;
 backgroundLoop:
 	jmp carScanning;сканирование датчиков дверей и тп
-
+	
 backLoopAfterCarScan:
 	sbrc programFlags, 0; если 1, тогда следующую строку, иначе пропустить
 	jmp backLoopAfterKeyScan;ждем таймер дребезга
@@ -200,7 +216,7 @@ keyScanAfterRestore:
 	out portC, acc
 	nop
 	
-	in acc, pinC
+	in acc, pinC;pinC
 	andi acc, 0x0F
 	cpi acc, 0x00
 	breq keyAfterInt
@@ -235,12 +251,13 @@ keyboardPressInt:
 
 ;прерывание по таймеру дребезга
 keyboardDebouncingInt:; окончание дребезга
-
+	sts AccReserve, acc
 	ldi acc, 0x0
 	out tccr2, acc; остановка таймера
 	cbr programFlags, 1; зануление флага нажатия клавиши
 
 	sbr programFlags,2
+	lds acc, AccReserve
 	reti
 
 ;входная точка определения клавиши
@@ -295,6 +312,7 @@ keyFound:
 ;-----КЛАВИАТУРА-----;
 ;--------ЧАСЫ--------;
 RTT_1msInt:
+	sts AccReserve, acc
 	ldi acc, 0x00
 	CLI; запрет прерываний
 	out TCNT1H, acc
@@ -304,6 +322,7 @@ RTT_1msInt:
 	sbr RTTFlags,1;установка флага "добавилась мсекунда"
 	ldi acc, 0
 	out OCF1A,acc;
+	lds acc, AccReserve
 	reti
 
 RTT_main:
@@ -441,9 +460,14 @@ carScanAlarm:
 	;rjmp bkdr1
 	;ldi acc, 0x01
 	;out PINB, acc
+
+
+
+displayRecodingTable:
+.DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0x75,0xAB,0xAC,0xAC,0xAD,0xAE,0x62, 0xAF,0xB0,0xB1
 	
 _labelTest:
-.DB 'П','Р','И','В','Е','Т',',',1,7,'М',0,8,'И',1,9,'Р',0,10,'!','e'
+.DB 'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н',1,0,'О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я','e'
 _labelMainMenu:
 .DB '0','0',':','0','0',':','0','0','e'
 _labelMenu1:
@@ -452,6 +476,10 @@ _labelMenu11:
 .DB '1','.','1',' ','В','Р','Е','М','Я',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
 _labelMenu11In:
 .DB 'В','Р','Е','М','Я',' ','0','0',':','0','0',':','0','0',1,0,'П','В','С','Ч','П','С','В',' ',' ','А','-','V',' ','B','-','X','e'
+_labelMenu12:
+.DB '1','.','2',' ','О','Б','Ъ','Е','М',' ','Б','А','К','А',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
+_labelMenu13:
+.DB '1','.','3',' ','С','Р','.',' ','Р','А','С','Х','О','Д',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
 _labelMenu2:
 .DB '2','.','А','В','Т','О','П','О','Д','О','Г','Р','Е','В',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
 

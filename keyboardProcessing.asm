@@ -16,9 +16,9 @@ keyBindingsNumbers:
 	
 	mov acc, menuModes
 	andi acc, 0x0F
-	cpi acc, 0;если левая часть (подменю) == 0, то вводим его
+	cpi acc, 0;если правая часть (подменю) == 0, то вводим его
 	breq keyBindingsEnterSubMode
-
+	sbrc programFlags, 3
 	call keyBindingsEnteringInModes; иначе - это ввод внутри функции
 	ret
 
@@ -42,16 +42,29 @@ keyBindingsEnterSubMode:		;ввод пункта подменю
 	
 keyBindingsLetters:
 	mov acc, r0
-	cpi acc, 0x0A
-	breq keyBindingsLetterACalling
-	cpi acc, 0x0B
-	breq keyBindingsLetterB
-	cpi acc, 0x0C
-	breq keyBindingsLetterC
-	cpi acc, 0x0D
-	breq keyBindingsLetterD	
-	jmp keyBindingsRet
+	subi acc, 10; --10
+	ldi ZH, high(keyBindingsLetterCallingTable)
+	ldi ZL, low(keyBindingsLetterCallingTable)
+	add r30, acc
+	;проверка на выходной перенос
+	BRBS 3, keyBindingsLettersOverflow
 
+keyBindingsLettersContinue:
+	ijmp
+
+keyBindingsLettersOverflow:
+	ldi acc, 1
+	add r30, acc
+	jmp keyBindingsLettersContinue
+
+keyBindingsLetterCallingTable:	
+	rjmp keyBindingsLetterACalling
+	rjmp keyBindingsLetterBCalling
+	rjmp keyBindingsLetterCCalling
+	rjmp keyBindingsLetterDCalling
+	rjmp keyBindingsLetterECalling
+	rjmp keyBindingsLetterFCalling
+	
 keyBindingsLetterACalling: call keyBindingsLetterA
 	ret
 keyBindingsLetterBCalling: call keyBindingsLetterB
@@ -60,15 +73,17 @@ keyBindingsLetterCCalling: call keyBindingsLetterC
 	ret
 keyBindingsLetterDCalling: call keyBindingsLetterD
 	ret
-;keyBindingsLetterECalling: call keyBindingsLetterE
-;keyBindingsLetterFCalling: call keyBindingsLetterF
+keyBindingsLetterECalling: call keyBindingsLetterE
+	ret
+keyBindingsLetterFCalling: call keyBindingsLetterF
+	ret
 
 keyBindingsLetterA:
 	;если главное меню - ничего не делать
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0
-	breq keyBindingsRet
+	breq keyBindingsRet2
 	;если выбран режим, то выбрать первый подрежим
 	mov acc, menuModes
 	andi acc, 0x0F
@@ -76,7 +91,6 @@ keyBindingsLetterA:
 	breq keyBindingLetterASubMode
 	;если выбран подрежим, то ввод в режимах
 	sbr programFlags, 8;	установка флага перехода в подрежим
-	call keyBindingsEnteringInModes
 	jmp keyBindingsRet
 
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
@@ -111,8 +125,6 @@ keyBindingsBackFromMode:
 	ldi menuModes, 0x00		;назад в главное меню
 	jmp keyBindingsRet2
 
-keyBindingsEnteringInModes:
-	ret
 keyBindingsLetterC:
 	jmp keyBindingsRet2
 keyBindingsLetterD:
@@ -128,7 +140,13 @@ keyBindingsBackToMainMenu:
 	ldi acc, 0x00
 	mov menuModes, acc
 	jmp keyBindingsRet2
-
+keyBindingsLetterE:
+	ret
+keyBindingsLetterF:
+	ret
 keyBindingsRet2: jmp keyBindingsRet
+keyBindingsEnteringInModes:
+	ret
+
 
 ;-----обработка клавиш-----;

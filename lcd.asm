@@ -1,23 +1,23 @@
-
+;pb5 - rw, pb6 - rs,  pb7 - e
 CMD_WR:		; Запись команды в дисплей. Код команды в R17
 			CLI
 			RCALL	BusyWait
 
-			CBI		PORTB,6; снятие E
+			CBI		PORTB,6; снятие RS
 			RJMP	WR_END
 
 DATA_WR:	; Запись данных в дисплей. Код данных в R17
 			CLI
 			RCALL	BusyWait
 			
-			SBI		PORTB,6; установка RW;SBI		PORTB,6; установка RW
+			SBI		PORTB,6; установка RS;SBI		PORTB,6; установка RS
 WR_END:		
-			CBI		PORTB,5; снятие Е
-			SBI		PORTB,7; установка флага записи в DDRAM 
+			CBI		PORTB,5; снятие rw
+			SBI		PORTB,7; установка e
 			
 			LDI		R16,0xFF
 			OUT		DDRE,R16; установка порта на вывод
-			OUT		PORTE,R17; подтяжка
+			OUT		PORTE,R17; вывод команды
 
 			RCALL	LCD_Delay
 
@@ -32,10 +32,10 @@ WR_END:
 			SEI
 			RET
 BusyWait:	
-			CBI		PORTB,6
-			SBI		PORTB,5
+			CBI		PORTB,6; снятие RS
+			SBI		PORTB,5; установка RW
 
-BusyLoop:	SBI		PORTB,7
+BusyLoop:	SBI		PORTB,7; установка E
 			
 			RCALL	LCD_Delay
 
@@ -92,5 +92,40 @@ DATA_WR_from_Z_row1:
 			ORI 	R17, 0x40
 			jmp 	DATA_WR_from_Z_coodsDone
 
+symToHex:;sym in acc (r16)
+			mov XH, ZH
+			mov XL, ZL
+			cpi acc, 'Ё'
+			breq brYoFix
+			cpi 	acc, 192
+			brlo 	brOther; если меньше кода буквы A, то код введенного символа равен коду для вывода на дисплей				
+			
+			
 
-	
+			subi 	acc, 'А'
+			;subi acc, -1
+
+			ldi acc2, LOW(displayRecodingTable<<1)
+			mov ZL, acc2
+			ldi acc2, HIGH(displayRecodingTable<<1)
+			mov ZH, acc2		
+			add 	r30, acc
+			brvs 	symToHexOverflow
+			rjmp brContinue
+
+brContinue:
+			lpm
+			mov 	acc, r0
+
+			mov ZH, XH
+			mov ZL, XL
+brOther:	ret
+
+symToHexOverflow:
+			inc 	r31
+			rjmp 	brContinue
+brYoFix:
+			ldi acc, 0xA2
+			ret
+
+

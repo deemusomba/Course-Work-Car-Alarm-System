@@ -29,6 +29,10 @@ updDisp2:
 	ret
 
 modeMain:	;главное меню
+	;ldi acc, LOW(_labelTest<<1)
+	;mov ZL, acc
+	;ldi acc, HIGH(_labelTest<<1)
+	;mov ZH, acc
 	ldi acc, LOW(_labelMainMenu<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMainMenu<<1)
@@ -119,11 +123,19 @@ modeSettingsSetTimeLabel:			;отображение подпункта настроек времени и дня недели
 	ret
 
 modeSettingsSetTankVolumeLabel:		;отображение подпункта настройки объема бака
-
+	ldi acc, LOW(_labelMenu12<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu12<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
 	ret
 
 modeSettingsSetAvgSpendingLabel:	;отображение подпункта настройки среднего рассхода
-
+	ldi acc, LOW(_labelMenu13<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu13<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
 	ret
 
 modeSettingsSubs:					;переход к нужному меню
