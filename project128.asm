@@ -24,7 +24,9 @@ RTT_1H: .BYTE 1;часы
 RTT_10H: .BYTE 1;десятки часов
 RTT_24H: .BYTE 1;подсчет суток в целом
 
-KeyScanTimer: .BYTE 1; таймер для дребезга клавиатуры 
+KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
+KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
+
 
 KeyTablePointer: .BYTE 1; указатель на таблицу с клавиатурой
 ;SevSegPointer: .BYTE 1; указатель на таблицу со значениями семисигментного индикатора //TODO: удалить
@@ -38,9 +40,9 @@ AccReserve: .BYTE 1; сохранить аккумулятор перед тем, как изменять его в прерыва
 .org 0x00
 	jmp start
 .org 0x02
-	jmp keyboardPressInt; процедура прерывания клав.
+	;jmp keyboardPressInt; процедура прерывания клав.
 .org 0x14
-	jmp keyboardDebouncingInt;  переход на процедуру прерывания таймера дребезга  
+	;jmp keyboardDebouncingInt;  переход на процедуру прерывания таймера дребезга  
 .org 0x18
 	jmp RTT_1msInt; 
 .org 0x20
@@ -72,7 +74,7 @@ start:
 	out spl,acc
 	ldi acc,high(ramend)
 	out sph,acc;иницилизация адресации
-	ldi scan, 0b00010001
+	ldi scan, 0b11101110;0b00010001
 	ldi cpg, 0x00
 	ldi keyRow, 0x04; по кол-ву строк - 4
 	ldi programFlags, 0x04
@@ -110,6 +112,7 @@ start:
 	STS RTT_24H, acc
 
 	STS KeyScanTimer, acc
+	STS KeyDebouncingTimer, acc
 
 	ldi acc, LOW(KeyTable<<1)
 	STS KeyTablePointer, acc	
@@ -147,17 +150,6 @@ backdoor:
 	;brne backgroundLoop
 
 bkdr:
-	;ldi acc, LOW(_labelTest<<1)
-	;mov ZL, acc
-	;ldi acc, HIGH(_labelTest<<1)
-	;mov ZH, acc
-;a:	;lpm
-	;mov acc, r0
-	;inc zl
-	
-
-	;call symToHex
-	;jmp a
 	jmp backgroundLoop
 
 ;-----главный цикл обработки флагов-----;
@@ -189,12 +181,6 @@ backLoopAfterRTTFlagsScan:
 
 ;-----конец обработки флагов-----;
 
-;входная точка обработки команд
-;operationScanning:
-	;cpi commands, 1
-	;breq displayNumber;
-	;jmp backLoopAfterOpScan
-
 updateDisplay:
 	cbr programFlags,4; очистка флага "обновить дисплей"
 		
@@ -218,13 +204,11 @@ keyScanAfterRestore:
 	
 	in acc, pinC;pinC
 	andi acc, 0x0F
-	cpi acc, 0x00
+	cpi acc, 0x0F
 	breq keyAfterInt
 	jmp keyboardPressInt
 
 keyAfterInt:
-	ldi acc, 0xFF
-	out portE, acc
 	lsl scan ;сдвиг логический левый
 	brcc keyScanSkipInc; если выходной перенос = 0, то пропускаем
 	inc scan; scan++
@@ -238,60 +222,37 @@ keyScanRestoreNumberRow:
 	
 ;прерывание по нажатию на клавишу
 keyboardPressInt:
-	sbr programFlags,1
 	in cpg, pinC;сохранение данных о столбце
 
 	;инициализация таймера дребезга
-	ldi acc, 0xB1
-	out tcnt2, acc;  выбор времени = ff - tcnt0
-	ldi acc, 0x05; 20 мc при 0хB1 и 0х05, 256uS - 1 тик
-	out tccr2, acc; делитель частоты для таймера
-	
+	ldi acc, 200
+	STS KeyDebouncingTimer, acc
+
+	sbr programFlags,1	
 	jmp keyAfterInt
-
-;прерывание по таймеру дребезга
-keyboardDebouncingInt:; окончание дребезга
-	sts AccReserve, acc
-	ldi acc, 0x0
-	out tccr2, acc; остановка таймера
-	cbr programFlags, 1; зануление флага нажатия клавиши
-
-	sbr programFlags,2
-	lds acc, AccReserve
-	reti
 
 ;входная точка определения клавиши
 keyboardColumnDetection:
-	
+	sbr programFlags, 4; установка флага "обновить дисплей" после нажатия на клавишу
+
 	lds acc, KeyTablePointer
 	clr ZH
 	mov ZL, acc
 	
 	mov acc, keyRow
-
-	cpi acc, 4
-	brne keyColDecLoop;
-	dec acc;
-
-keyColDecLoop:
-	;определение строки
-	cpi acc, 0; если 0, то выход   
-	breq keyRowFound; 
-
-	adiw ZL, 4; перемещаем курсор на 4 
-	dec acc; keyRow--
-
-	jmp keyColDecLoop
-
+	push keyRow
+	ldi acc, 4
+	mul acc, keyRow
+	mov acc, r0
+	add r30, acc
+	pop keyRow
 keyRowFound:
 	;строка найдена 
-
 	mov acc, cpg
 keyRowFoundLoop:
 	;определение кнопки
-
 	lsr acc
-	brcs keyFound
+	brcc keyFound
 	adiw ZL, 1;   перебираем кнопки
 
 	rjmp keyRowFoundLoop
@@ -327,6 +288,19 @@ RTT_1msInt:
 
 RTT_main:
 	;тут какая-то логика для программных таймеров и их флагов
+	sbrs programFlags, 0
+	jmp RTT_KeyScanTimer
+	lds acc, KeyDebouncingTimer
+	SUBI acc, 1
+	STS KeyDebouncingTimer, acc
+	cpi acc, 0
+	brne RTT_ProgrammTimer
+
+	cbr programFlags, 1; зануление флага нажатия клавиши
+	sbr programFlags,2
+	
+	jmp RTT_ProgrammTimer
+RTT_KeyScanTimer:
 	;программный таймер опроса клавиатуры
 	lds acc, KeyScanTimer
 	SUBI acc, (-1)
@@ -334,7 +308,6 @@ RTT_main:
 	cpi acc, 10
 	brne RTT_ProgrammTimer
 
-RTT_KeyDebouncingTimer:
 	sbr RTTFlags, 2; установка флага по инициализации опроса клавиатуры
 	ldi acc, 0
 	STS KeyScanTimer, acc
