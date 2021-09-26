@@ -8,9 +8,8 @@
 .def menuModes=R21;старшая часть отвечает за пункты меню, младшая - за подпункты
 .def acc=R16;аккумулятор
 .def acc2=R17;вспомогательный регистр для передачи данных между блоками
-.def programFlags=R22; 0|0|0|0|inMode|updateDisplay|DebouncingEnd|keyPress
+.def programFlags=R22; 0|0|0|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
 .def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|0|keyScan|msAdd|0
-.def prK=R5; pressed key
 .def keyboardPointer=R24
 
 .dseg
@@ -29,11 +28,9 @@ KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры
 
 
 KeyTablePointer: .BYTE 1; указатель на таблицу с клавиатурой
-;SevSegPointer: .BYTE 1; указатель на таблицу со значениями семисигментного индикатора //TODO: удалить
-
 AccReserve: .BYTE 1; сохранить аккумулятор перед тем, как изменять его в прерываниях 
-
-
+pressedKey: .BYTE 1; нажатая клавиша - для ввода в режимах
+cursorCoords: .BYTE 1;координаты курсора
 
 .cseg
 
@@ -57,18 +54,18 @@ KeyTable:
 .DB 0x0F,0x0A,0x00,0x0B ; B, 0, A, F
 
 ; dp|g|f|e| d|c|b|a|
-;SevenSegmentValues:
-;.DB 0xC0,0xF9,0xA4,0xB0 ; 0, 1, 2, 3  |-a-|
-;.DB 0x99,0x92,0x82,0xF8 ; 4, 5, 6, 7  f   b
-;.DB 0x80,0x90,0x88,0x83 ; 8, 9, A. B  |-g-|
-;.DB 0xC6,0xA1,0x86,0x8E ; C, D, E, F  e   c
-						;              |-d-| dp
+; |-a-|
+; f   b
+; |-g-|
+; e   c
+; |-d-| dp
 
 .include "LCD_macro.inc"
 .include "LCD.asm"
 .include "symToHexConverter.asm"
 .include "keyboardProcessing.asm"
 .include "displayingInfo.asm"
+.include "enteringInfo.asm"
 start:
 	ldi acc,low(ramend)
 	out spl,acc
@@ -110,15 +107,16 @@ start:
 	STS RTT_1H, acc
 	STS RTT_10H, acc
 	STS RTT_24H, acc
-
+	
 	STS KeyScanTimer, acc
 	STS KeyDebouncingTimer, acc
 
 	ldi acc, LOW(KeyTable<<1)
 	STS KeyTablePointer, acc	
 	
-	;ldi acc, LOW(SevenSegmentValues<<1)
-	;STS SevSegPointer, acc		
+	ldi acc, 0x00
+	STS pressedKey, acc	
+	STS cursorCoords, acc
 
 	ldi acc, 0x01
 	out pind, acc;  если 1 в младшем бите, то не нажато	  	
@@ -171,12 +169,14 @@ backLoopAfterKeyScan:
 	jmp keyboardColumnDetection; определение кнопки
 
 backLoopAfterOpScan:
-	sbrc RTTFlags, 0; если 0, то флаги не установлены, пропустить
+	sbrc RTTFlags, 0; добавить мс
 	jmp RTT_main
 
 backLoopAfterRTTFlagsScan:
 	sbrc programFlags, 2
 	call updateDisplay
+	sbrc programFlags, 3
+	call enteringInfo
 	jmp backgroundLoop
 
 ;-----конец обработки флагов-----;
@@ -233,8 +233,6 @@ keyboardPressInt:
 
 ;входная точка определения клавиши
 keyboardColumnDetection:
-	sbr programFlags, 4; установка флага "обновить дисплей" после нажатия на клавишу
-
 	lds acc, KeyTablePointer
 	clr ZH
 	mov ZL, acc
@@ -263,6 +261,9 @@ keyFound:
 	cbr programFlags, 2
 
 	call keyBindings	
+
+	sbrs programFlags, 3; если в "режиме", то по умолчанию не обновлять дисплей
+	sbr programFlags, 4; установка флага "обновить дисплей" после нажатия на клавишу
 
 	ldi acc, 0
 	STS KeyScanTimer, acc
@@ -332,6 +333,7 @@ RTT_ProgrammTimer:
 	cpi acc, 4
 	brne RTT_end
 	
+	sbrs programFlags, 3; если находится в состоянии "в режиме", то не обновлять
 	sbr programFlags, 4; установка флага "обновить дисплей" раз в секунду
 
 	ldi acc, 0
@@ -434,8 +436,6 @@ carScanAlarm:
 	;ldi acc, 0x01
 	;out PINB, acc
 
-
-
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0x75,0xAB,0xAC,0xAC,0xAD,0xAE,0x62, 0xAF,0xB0,0xB1
 	
@@ -455,4 +455,6 @@ _labelMenu13:
 .DB '1','.','3',' ','С','Р','.',' ','Р','А','С','Х','О','Д',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
 _labelMenu2:
 .DB '2','.','А','В','Т','О','П','О','Д','О','Г','Р','Е','В',1,0,'A','-','В','О','Й','Т','И',' ',' ','B','-','Н','А','З','А','Д','e'
+
+
 

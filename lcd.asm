@@ -110,7 +110,7 @@ symToHex:;sym in acc (r16)
 			ldi acc2, HIGH(displayRecodingTable<<1)
 			mov ZH, acc2		
 			add 	r30, acc
-			brvs 	symToHexOverflow
+			brcs 	symToHexOverflow
 			rjmp brContinue
 
 brContinue:
@@ -128,4 +128,31 @@ brYoFix:
 			ldi acc, 0xA2
 			ret
 
+shiftCoursorRight:;кол-во раз в r16
+			dec acc
+			push r16
+			cpi acc, 0
+			breq shiftCoursorRightRet
+			
+			LDI		R17,(1<<4)|(1<<2); сдвинуть курсор вправо
+			RCALL	CMD_WR
+			
+			pop r16
+			rjmp shiftCoursorRight
 
+shiftCoursorRightRet:
+			pop r16			
+			ret
+
+shiftCoursorLeft:;кол-во раз в r17
+			dec acc2
+			cpi acc2, 0
+			breq shiftCoursorLeftRet
+			
+			LDI		R17,(1<<4); сдвинуть курсор влево
+			RCALL	CMD_WR
+
+			rjmp shiftCoursorLeft
+
+shiftCoursorLeftRet:			
+			ret

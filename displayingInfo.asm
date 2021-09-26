@@ -29,10 +29,6 @@ updDisp2:
 	ret
 
 modeMain:	;главное меню
-	;ldi acc, LOW(_labelTest<<1)
-	;mov ZL, acc
-	;ldi acc, HIGH(_labelTest<<1)
-	;mov ZH, acc
 	ldi acc, LOW(_labelMainMenu<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMainMenu<<1)
@@ -160,6 +156,18 @@ modeSettingsSetTime:
 	ldi acc, HIGH(_labelMenu11In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
+	
+	LDI		R17,0b00000010; вернуть курсор в начальное положение
+	RCALL	CMD_WR
+
+	LDI		R17,0b00001111; включить мигание и подсветку курсора
+	RCALL	CMD_WR
+	;сдвинуть до ввода цифр
+	ldi acc, 7
+	RCALL shiftCoursorRight
+
+	ldi acc, 0x07
+
 	ret
 modeSettingsSetTankVolume:
 	ret

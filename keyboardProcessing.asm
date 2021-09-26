@@ -9,6 +9,8 @@ keyBindings:
 keyBindingsRet:	ret
 
 keyBindingsNumbers:
+	cbr programFlags, 16; по умолчанию, клавиша в режиме ввода не установлена
+
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0; если левая часть (режим) == 0, то вводим его
@@ -47,7 +49,7 @@ keyBindingsLetters:
 	ldi ZL, low(keyBindingsLetterCallingTable)
 	add r30, acc
 	;проверка на выходной перенос
-	BRBS 3, keyBindingsLettersOverflow
+	brcs keyBindingsLettersOverflow
 
 keyBindingsLettersContinue:
 	ijmp
@@ -91,6 +93,7 @@ keyBindingsLetterA:
 	breq keyBindingLetterASubMode
 	;если выбран подрежим, то ввод в режимах
 	sbr programFlags, 8;	установка флага перехода в подрежим
+	sbr programFlags, 4; установка флага "обновить дисплей"
 	jmp keyBindingsRet
 
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
@@ -146,6 +149,8 @@ keyBindingsLetterF:
 	ret
 keyBindingsRet2: jmp keyBindingsRet
 keyBindingsEnteringInModes:
+	sbr programFlags, 16
+	STS pressedKey, r0
 	ret
 
 
