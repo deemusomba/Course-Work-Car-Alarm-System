@@ -60,9 +60,7 @@ KeyTable:
 ; e   c
 ; |-d-| dp
 
-.include "LCD_macro.inc"
 .include "LCD.asm"
-.include "symToHexConverter.asm"
 .include "keyboardProcessing.asm"
 .include "displayingInfo.asm"
 .include "enteringInfo.asm"

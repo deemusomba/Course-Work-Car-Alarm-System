@@ -1,3 +1,4 @@
+;-----ввод информации-----;
 enteringInfo:
 	sbrs programFlags, 4
 	ret
@@ -16,3 +17,4 @@ enteringInfoMain:
 	;RCALL	CMD_WR
 
 	ret
+;-----ввод информации-----;
