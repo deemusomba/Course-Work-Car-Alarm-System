@@ -263,10 +263,11 @@ modeSettingsSetTime:
 	LDI		R17,0b00001111; включить мигание и подсветку курсора
 	RCALL	CMD_WR
 	;сдвинуть до ввода цифр
-	ldi acc, 7
-	RCALL shiftCoursorRight
+	ldi acc, 6
+	RCALL shiftCursorRight
 
-	ldi acc, 0x07
+	ldi acc, 0x00
+	STS cursorCoords, acc
 
 	ret
 											;-----1.2. Объем бака-----;

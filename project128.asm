@@ -13,6 +13,7 @@
 .def keyboardPointer=R24
 
 .dseg
+.ORG SRAM_START+100
 RTT_mS: .BYTE 1; милисекунда
 RTT_qS: .BYTE 1; quarterS, четверть секунды
 RTT_1S: .BYTE 1;секунды
@@ -26,8 +27,8 @@ RTT_24H: .BYTE 1;подсчет суток в целом
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
 
+keyboardInputBuffer: .BYTE 16; буфер ввода клавиатуры
 
-KeyTablePointer: .BYTE 1; указатель на таблицу с клавиатурой
 AccReserve: .BYTE 1; сохранить аккумулятор перед тем, как изменять его в прерываниях 
 pressedKey: .BYTE 1; нажатая клавиша - для ввода в режимах
 cursorCoords: .BYTE 1;координаты курсора
@@ -109,12 +110,22 @@ start:
 	STS KeyScanTimer, acc
 	STS KeyDebouncingTimer, acc
 
-	ldi acc, LOW(KeyTable<<1)
-	STS KeyTablePointer, acc	
-	
 	ldi acc, 0x00
 	STS pressedKey, acc	
 	STS cursorCoords, acc
+	
+	STS keyboardInputBuffer, acc
+
+	ldi acc, 0xff
+	ldi acc2, 0x11 
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+startkeyboardInputBufferInit:
+	ST y, acc
+	adiw y,1
+	dec acc2
+	cpi acc2, 0
+	brne startkeyboardInputBufferInit
 
 	ldi acc, 0x01
 	out pind, acc;  если 1 в младшем бите, то не нажато	  	
@@ -231,9 +242,8 @@ keyboardPressInt:
 
 ;входная точка определения клавиши
 keyboardColumnDetection:
-	lds acc, KeyTablePointer
-	clr ZH
-	mov ZL, acc
+	ldi ZL,	LOW(KeyTable<<1)
+	ldi ZH, HIGH(KeyTable<<1)
 	
 	mov acc, keyRow
 	push keyRow
@@ -436,7 +446,7 @@ carScanAlarm:
 
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0x75,0xAB,0xAC,0xAC,0xAD,0xAE,0x62, 0xAF,0xB0,0xB1
-	
+
 _labelTest:
 .DB 'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н',1,0,'О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я','e'
 _labelMainMenu:

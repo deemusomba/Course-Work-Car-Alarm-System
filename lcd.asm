@@ -129,32 +129,34 @@ brYoFix:
 			ldi acc, 0xA2
 			ret
 
-shiftCoursorRight:;кол-во раз в r16
-			dec acc
+shiftCursorRight:;кол-во раз в r16
 			push r16
-			cpi acc, 0
-			breq shiftCoursorRightRet
-			
 			LDI		R17,(1<<4)|(1<<2); сдвинуть курсор вправо
 			RCALL	CMD_WR
-			
 			pop r16
-			rjmp shiftCoursorRight
 
-shiftCoursorRightRet:
-			pop r16			
+			dec acc
+			cpi acc, 0
+			brne shiftCursorRight
+
 			ret
 
-shiftCoursorLeft:;кол-во раз в r17
+shiftCursorLeft:;кол-во раз в r17
 			dec acc2
 			cpi acc2, 0
-			breq shiftCoursorLeftRet
+			breq shiftCursorLeftRet
 			
 			LDI		R17,(1<<4); сдвинуть курсор влево
 			RCALL	CMD_WR
 
-			rjmp shiftCoursorLeft
+			rjmp shiftCursorLeft
 
-shiftCoursorLeftRet:			
+shiftCursorLeftRet:			
+			ret
+shiftCursorSecondRow:
+			LDI		R17,0b00000010; вернуть курсор в начальное положение
+			RCALL	CMD_WR
+			ldi acc, 64
+			RCALL shiftCursorRight
 			ret
 ;-----Управление дисплеем-----;

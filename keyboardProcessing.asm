@@ -1,6 +1,7 @@
 ;-----обработка клавиш-----;
 keyBindings:
 	;тут какая-то логика для кнопок	
+	cbr programFlags, 16; по умолчанию, клавиша в режиме ввода не установлена
 	mov acc, r0
 	cpi acc, 10
 	brge keyBindingsLetters
@@ -9,8 +10,6 @@ keyBindings:
 keyBindingsRet:	ret
 
 keyBindingsNumbers:
-	cbr programFlags, 16; по умолчанию, клавиша в режиме ввода не установлена
-
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0; если левая часть (режим) == 0, то вводим его
