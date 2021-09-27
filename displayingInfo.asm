@@ -24,7 +24,7 @@ updateDisplayMenuSwitchContinue:
 
 updateDisplayMenuSwitchOverflow:
 	ldi acc, 1
-	add r30, acc
+	add r31, acc
 	jmp updateDisplayMenuSwitchContinue
 
 updateDisplayMenuSwitchTable:
@@ -126,14 +126,14 @@ modeSettingsSubsLabelsSwitchContinue:
 	ijmp
 modeSettingsSubsLabelsSwitchOverflow:
 	ldi acc, 1
-	add r30, acc
+	add r31, acc
 	jmp modeSettingsSubsLabelsSwitchContinue
 
 modeSettingsSubsLabelsSwitchTable:
-	mov acc, acc	;нулевогго меню нет
-	jmp modeSettingsSetTimeLabelCalling
-	jmp modeSettingsSetTankVolumeLabelCalling
-	jmp modeSettingsSetAvgSpendingLabelCalling
+	nop
+	rjmp modeSettingsSetTimeLabelCalling
+	rjmp modeSettingsSetTankVolumeLabelCalling
+	rjmp modeSettingsSetAvgSpendingLabelCalling
 
 modeSettingsSetTimeLabelCalling:	call modeSettingsSetTimeLabel
 	ret
@@ -189,6 +189,7 @@ displayEnteringMenuMenuSwitch:
 	ldi ZH, high(displayEnteringMenuMenuSwitchTable)
 	ldi ZL, low(displayEnteringMenuMenuSwitchTable)
 	add r30, acc
+	inc r30
 	brcs displayEnteringMenuMenuSwitchOverflow
 
 displayEnteringMenuMenuSwitchContinue:
@@ -196,15 +197,16 @@ displayEnteringMenuMenuSwitchContinue:
 
 displayEnteringMenuMenuSwitchOverflow:
 	ldi acc, 1
-	add r30, acc
+	add r31, acc
 	jmp displayEnteringMenuMenuSwitchContinue
 
 displayEnteringMenuMenuSwitchTable:
-	jmp displayEnteringMenu1SwitchCalling
-	jmp displayEnteringMenu2SwitchCalling
-	jmp displayEnteringMenu3SwitchCalling
-	jmp displayEnteringMenu4SwitchCalling
-	jmp displayEnteringMenu5SwitchCalling
+	nop
+	rjmp displayEnteringMenu1SwitchCalling
+	rjmp displayEnteringMenu2SwitchCalling
+	rjmp displayEnteringMenu3SwitchCalling
+	rjmp displayEnteringMenu4SwitchCalling
+	rjmp displayEnteringMenu5SwitchCalling
 
 displayEnteringMenu1SwitchCalling: call displayEnteringMenu1Switch
 	ret
@@ -231,13 +233,14 @@ displayEnteringMenu1SwitchContinue:
 
 displayEnteringMenu1SwitchOverflow:
 	ldi acc, 1
-	add r30, acc
+	add r31, acc
 	jmp displayEnteringMenu1SwitchContinue
 
 displayEnteringMenu1SwitchTable:
-	breq displayEnteringMenu1Submenu1Calling
-	breq displayEnteringMenu1Submenu2Calling
-	breq displayEnteringMenu1Submenu3Calling
+	nop
+	rjmp displayEnteringMenu1Submenu1Calling
+	rjmp displayEnteringMenu1Submenu2Calling
+	rjmp displayEnteringMenu1Submenu3Calling
 
 
 displayEnteringMenu1Submenu1Calling: call modeSettingsSetTime
