@@ -140,6 +140,15 @@ enteringInfoSettingsTimeError:
 	ret
 
 enteringInfoSettingsTimeCursorPos1:
+	LDS acc, keyboardInputBuffer
+	cpi acc, 2
+	breq enteringInfoSettingsTimeCursorPos1_2h
+	jmp enteringInfoSettingsTimeCursorPos1_Continue
+enteringInfoSettingsTimeCursorPos1_2h:
+	lds acc, pressedKey
+	cpi acc, 4
+	brge enteringInfoSettingsTimeError
+enteringInfoSettingsTimeCursorPos1_Continue:
 	lds acc2, pressedKey
 	ldi acc, 0x30
 	add acc2, acc
@@ -203,7 +212,7 @@ enteringInfoSettingsTimeIncCursor:
 enteringInfoSettingsTimeKeysLetters:	
 	lds acc, pressedKey
 	cpi acc, 0x0E
-	brge enteringInfoSettingsTimeError
+	brge enteringInfoSettingsTimeError2
 
 	subi acc, 0x0A
 	ldi ZH, high(enteringInfoSettingsTimeKeysLettersSwitchTable)
@@ -215,6 +224,9 @@ enteringInfoSettingsTimeKeysLetters:
 
 enteringInfoSettingsTimeKeysLettersSwitchContinue:
 	ijmp
+
+enteringInfoSettingsTimeError2:
+	ret
 
 enteringInfoSettingsTimeKeysLettersSwitchOverflow:
 	ldi acc, 1
@@ -242,35 +254,36 @@ enteringInfoSettingsTimeKeysLettersAContinue:
 	LDI YL, low(keyboardInputBuffer)
 	LDI YH, high(keyboardInputBuffer)
 	LD acc, Y+
-	cpi acc, 3
-	brge enteringInfoSettingsTimeKeysLettersA1
 	STS RTT_10H, acc
-enteringInfoSettingsTimeKeysLettersA1:	LD acc, Y+
-	STS RTT_1H, acc
+	mov acc2, acc
+	ldi acc, 10
+	mul acc, acc2
+	mov acc2, r0
 	LD acc, Y+
-	cpi acc, 3
-	brge enteringInfoSettingsTimeKeysLettersA2
+	STS RTT_1H, acc
+	add acc, acc2
+	STS RTT_24H, acc
+	LD acc, Y+
 	STS RTT_10m, acc
-enteringInfoSettingsTimeKeysLettersA2:	LD acc, Y+
+	LD acc, Y+
 	STS RTT_1m	, acc
 	LD acc, Y+
-	cpi acc, 3
-	brge enteringInfoSettingsTimeKeysLettersA3
 	STS RTT_10s, acc
-enteringInfoSettingsTimeKeysLettersA3:	LD acc, Y+
+	LD acc, Y+
 	STS RTT_1s	, acc
-
 	cbr programFlags, 8
 	jmp enteringInfoSettingsTimeKeysLettersB 
 
 enteringInfoSettingsTimeKeysLettersAWeekDay:
 	subi acc, 6
-	STS RTT_24H, acc
+	STS RTT_7Days, acc
 	rjmp enteringInfoSettingsTimeKeysLettersAContinue
 
 
 enteringInfoSettingsTimeKeysLettersB:
 	cbr programFlags, 8
+	LDI		R17,0b00001100; включить мигание и подсветку курсора
+	RCALL	CMD_WR
 	ret	
 enteringInfoSettingsTimeKeysLettersC:
 	lds acc, cursorCoords

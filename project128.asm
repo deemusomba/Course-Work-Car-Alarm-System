@@ -22,7 +22,8 @@ RTT_1M: .BYTE 1;минуты
 RTT_10M: .BYTE 1;десятки минут
 RTT_1H: .BYTE 1;часы
 RTT_10H: .BYTE 1;десятки часов
-RTT_24H: .BYTE 1;подсчет суток в целом
+RTT_24H: .BYTE 1;подсчет суток (24 часа)
+RTT_7Days: .BYTE 1; день недели
 
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
@@ -388,10 +389,9 @@ RTT_continue:
 	STS RTT_24H, acc
 	;проверка суток
 	cpi acc, 24
-	brne RTT_end2
-	ldi acc, 0
-	STS RTT_24H, acc
+	breq RTT_24h_inc
 
+RTT_continue2:
 	lds acc, RTT_1H
 	SUBI acc, (-1)
 	STS RTT_1H, acc
@@ -405,12 +405,27 @@ RTT_continue:
 	SUBI acc, (-1)
 	STS RTT_10H, acc
 	;проверка на количество десятков часов
-	cpi acc, 6
+	cpi acc, 3
 	brne RTT_end2
 	ldi acc, 0
 	STS RTT_10H, acc
 
 RTT_end2:
+	jmp backLoopAfterRTTFlagsScan
+
+RTT_24h_inc:
+	ldi acc, 0
+	STS RTT_24H, acc
+	STS RTT_1H, acc
+	STS RTT_10H, acc
+	lds acc, RTT_7Days
+	SUBI acc, (-1)
+	STS RTT_7Days, acc
+	;проверка кол-во дней
+	cpi acc, 7
+	brne RTT_end2
+	ldi acc, 0
+	STS RTT_7Days, acc
 	jmp backLoopAfterRTTFlagsScan
 ;--------ЧАСЫ--------;
 
@@ -449,7 +464,9 @@ _labelTest:
 _labelError:
 .DB "ПРОИЗОШЛА", 1,0, "ПРОГ. ОШИБКА"
 _labelMainMenu:
-.DB '0','0',':','0','0',':','0','0','e'
+.DB "00:00:00",'e'
+_labelsDaysOfTheWeek:
+.DB "ПН",'e',"ВТ",'e',"СР",'e',"ЧТ",'e',"ПТ",'e',"СБ",'e',"ВС",'e'
 _labelMenu1:
 .DB "1.УСТАНОВКИ", 1, 0, "А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu11:

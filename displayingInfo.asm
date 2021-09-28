@@ -96,6 +96,26 @@ modeMain:	;главное меню
 	adc acc2, acc
 	RCALL DATA_WR
 
+
+	LDI		R17,(1<<7)|(9+0x40*0)
+	RCALL	CMD_WR	
+
+	lds acc, RTT_7Days
+	ldi ZH, high(_labelsDaysOfTheWeek<<1)
+	ldi ZL, low(_labelsDaysOfTheWeek<<1)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs modeMainDayOfWeekOverflow
+	jmp modeMainContinue
+modeMainDayOfWeekOverflow:
+	ldi acc, 1
+	add r31, acc
+
+modeMainContinue:
+
+	call DATA_WR_from_Z
+
 	ret
 											;-----1. Установки-----;
 modeSettings:
@@ -241,7 +261,46 @@ modeSettingsSetTime:
 	ldi acc, HIGH(_labelMenu11In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
-	
+
+	LDI		R17,(1<<7)|(6+0x40*0)
+	RCALL	CMD_WR
+
+	lds acc2, RTT_10H
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	lds acc2, RTT_1H
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	LDI		R17,(1<<7)|(9+0x40*0)
+	RCALL	CMD_WR
+
+	lds acc2, RTT_10M
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	lds acc2, RTT_1M
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	LDI		R17,(1<<7)|(12+0x40*0)
+	RCALL	CMD_WR
+
+	lds acc2, RTT_10S
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	lds acc2, RTT_1S
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
 	LDI		R17,0b00000010; вернуть курсор в начальное положение
 	RCALL	CMD_WR
 
