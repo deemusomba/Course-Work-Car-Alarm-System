@@ -16,7 +16,9 @@ updatingDisplay:
 updateDisplayMenuSwitch:
 	ldi ZH, high(updateDisplayMenuSwitchTable)
 	ldi ZL, low(updateDisplayMenuSwitchTable)
-	add r30, acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs updateDisplayMenuSwitchOverflow
 
 updateDisplayMenuSwitchContinue:
@@ -28,13 +30,6 @@ updateDisplayMenuSwitchOverflow:
 	jmp updateDisplayMenuSwitchContinue
 
 updateDisplayMenuSwitchTable:
-	rjmp updDisp0Calling
-	rjmp updDisp1Calling
-	rjmp updDisp2Calling	
-	rjmp updDisp3Calling
-	rjmp updDisp4Calling
-	rjmp updDisp5Calling
-
 updDisp0Calling: call modeMain
 	ret
 updDisp1Calling: call modeSettings
@@ -119,7 +114,10 @@ modeSettings:
 modeSettingsSubsLabels:
 	ldi ZH, high(modeSettingsSubsLabelsSwitchTable)
 	ldi ZL, low(modeSettingsSubsLabelsSwitchTable)
-	add r30, acc
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs modeSettingsSubsLabelsSwitchOverflow
 
 modeSettingsSubsLabelsSwitchContinue:
@@ -130,11 +128,6 @@ modeSettingsSubsLabelsSwitchOverflow:
 	jmp modeSettingsSubsLabelsSwitchContinue
 
 modeSettingsSubsLabelsSwitchTable:
-	nop
-	rjmp modeSettingsSetTimeLabelCalling
-	rjmp modeSettingsSetTankVolumeLabelCalling
-	rjmp modeSettingsSetAvgSpendingLabelCalling
-
 modeSettingsSetTimeLabelCalling:	call modeSettingsSetTimeLabel
 	ret
 modeSettingsSetTankVolumeLabelCalling: call modeSettingsSetTankVolumeLabel
@@ -181,15 +174,17 @@ displayEnteringMenuMenuSwitchCalling: call displayEnteringMenuMenuSwitch
 displayEnteringMenuMenuSwitch:	
 	mov acc, menuModes
 	andi acc, 0xf0
-	lsl acc	
-	lsl acc
-	lsl acc
-	lsl acc
+	lsr acc	
+	lsr acc
+	lsr acc
+	lsr acc
 
 	ldi ZH, high(displayEnteringMenuMenuSwitchTable)
 	ldi ZL, low(displayEnteringMenuMenuSwitchTable)
-	add r30, acc
-	inc r30
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs displayEnteringMenuMenuSwitchOverflow
 
 displayEnteringMenuMenuSwitchContinue:
@@ -201,13 +196,6 @@ displayEnteringMenuMenuSwitchOverflow:
 	jmp displayEnteringMenuMenuSwitchContinue
 
 displayEnteringMenuMenuSwitchTable:
-	nop
-	rjmp displayEnteringMenu1SwitchCalling
-	rjmp displayEnteringMenu2SwitchCalling
-	rjmp displayEnteringMenu3SwitchCalling
-	rjmp displayEnteringMenu4SwitchCalling
-	rjmp displayEnteringMenu5SwitchCalling
-
 displayEnteringMenu1SwitchCalling: call displayEnteringMenu1Switch
 	ret
 displayEnteringMenu2SwitchCalling: call displayEnteringMenu2Switch
@@ -225,7 +213,10 @@ displayEnteringMenu1Switch:
 
 	ldi ZH, high(displayEnteringMenu1SwitchTable)
 	ldi ZL, low(displayEnteringMenu1SwitchTable)
-	add r30, acc
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs displayEnteringMenu1SwitchOverflow
 
 displayEnteringMenu1SwitchContinue:
@@ -237,12 +228,6 @@ displayEnteringMenu1SwitchOverflow:
 	jmp displayEnteringMenu1SwitchContinue
 
 displayEnteringMenu1SwitchTable:
-	nop
-	rjmp displayEnteringMenu1Submenu1Calling
-	rjmp displayEnteringMenu1Submenu2Calling
-	rjmp displayEnteringMenu1Submenu3Calling
-
-
 displayEnteringMenu1Submenu1Calling: call modeSettingsSetTime
 	ret
 displayEnteringMenu1Submenu2Calling: call modeSettingsSetTankVolume
@@ -278,6 +263,14 @@ modeSettingsSetAvgSpending:
 	ret
 
 displayEnteringMenu2Switch:
+	ret
+
+displayInfoError:
+	ldi acc, LOW(_labelError<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelError<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
 	ret
 
 ;-----отображение информации-----;

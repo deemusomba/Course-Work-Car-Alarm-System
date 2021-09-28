@@ -142,14 +142,16 @@ shiftCursorRight:;кол-во раз в r16
 			ret
 
 shiftCursorLeft:;кол-во раз в r17
-			dec acc2
-			cpi acc2, 0
-			breq shiftCursorLeftRet
-			
+			push r16
 			LDI		R17,(1<<4); сдвинуть курсор влево
 			RCALL	CMD_WR
+			pop r16
 
-			rjmp shiftCursorLeft
+			dec acc
+			cpi acc, 0
+			brne shiftCursorLeft
+
+			ret
 
 shiftCursorLeftRet:			
 			ret

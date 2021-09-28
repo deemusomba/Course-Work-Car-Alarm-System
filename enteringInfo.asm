@@ -16,7 +16,10 @@ enteringInfoMenuSwitch:
 
 	ldi ZH, high(enteringInfoMenuSwitchTable)
 	ldi ZL, low(enteringInfoMenuSwitchTable)
-	add r30, acc
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs enteringInfoMenuSwitchOverflow
 
 enteringInfoMenuSwitchContinue:
@@ -28,13 +31,6 @@ enteringInfoMenuSwitchOverflow:
 	jmp enteringInfoMenuSwitchContinue
 
 enteringInfoMenuSwitchTable:
-	nop	;нулевогго меню нет
-	rjmp enteringInfoMenu1SwitchCalling
-	rjmp enteringInfoMenu2SwitchCalling
-	rjmp enteringInfoMenu3SwitchCalling
-	rjmp enteringInfoMenu4SwitchCalling
-	rjmp enteringInfoMenu5SwitchCalling
-
 enteringInfoMenu1SwitchCalling: call enteringInfoMenu1Switch
 	ret
 enteringInfoMenu2SwitchCalling: ;call enteringInfoMenu2Switch
@@ -52,7 +48,10 @@ enteringInfoMenu1Switch:
 
 	ldi ZH, high(enteringInfoMenu1SwitchTable)
 	ldi ZL, low(enteringInfoMenu1SwitchTable)
-	add r30, acc
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	brcs enteringInfoMenu1SwitchOverflow
 
 enteringInfoMenu1SwitchContinue:
@@ -64,13 +63,7 @@ enteringInfoMenu1SwitchOverflow:
 	jmp enteringInfoMenu1SwitchContinue
 
 enteringInfoMenu1SwitchTable:
-	nop
-	rjmp enteringInfoMenu1Submenu1Calling
-	rjmp enteringInfoMenu1Submenu2Calling
-	rjmp enteringInfoMenu1Submenu3Calling
-
-
-enteringInfoMenu1Submenu1Calling: call enteringInfoSettingsTime
+enteringInfoMenu1Submenu1Calling: call enteringInfoSettingsTimeCursorPosSwitch
 	ret
 enteringInfoMenu1Submenu2Calling: ;call modeSettingsSetTankVolume
 	ret
@@ -78,134 +71,235 @@ enteringInfoMenu1Submenu3Calling: ;call modeSettingsSetAvgSpending
 	ret
 
 
-enteringInfoSettingsTime:
-	;учитывать меню, координаты курсора
+enteringInfoSettingsTimeCursorPosSwitch:
+	;занести значение клавиши в буфер взависимости от курсора
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brge enteringInfoSettingsTimeKeysLettersCalling
+
 	lds acc, cursorCoords
-	andi acc, 0xf0
-	cpi acc, 0
-	breq enteringInfoSettingsTimeRow0Switch
-	jmp enteringInfoSettingsTimeRow1Switch
-
-
-enteringInfoSettingsTimeRow0Switch:
-	lds acc, cursorCoords
-	andi acc, 0x0F
-	ldi ZH, high(enteringInfoSettingsTimeRow0SwitchTable)
-	ldi ZL, low(enteringInfoSettingsTimeRow0SwitchTable)
-	add r30, acc
-	brcs enteringInfoSettingsTimeRow0SwitchOverflow
-
-enteringInfoSettingsTimeRow0SwitchContinue:
-	ijmp
-
-enteringInfoSettingsTimeRow0SwitchOverflow:
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	
+	add YL, acc
+	brcs enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow
+	jmp enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue
+enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow:
 	ldi acc, 1
 	add r31, acc
-	jmp enteringInfoMenuSwitchContinue
-
-enteringInfoSettingsTimeRow0SwitchTable:
-	rjmp enteringInfoSettingsTimeRow0Col0
-	rjmp enteringInfoSettingsTimeRow0Col1
-	rjmp enteringInfoSettingsTimeRow0Col2
-	rjmp enteringInfoSettingsTimeRow0Col3
-	rjmp enteringInfoSettingsTimeRow0Col4
-	rjmp enteringInfoSettingsTimeRow0Col5
-
-enteringInfoSettingsTimeRow0Col0Calling: call enteringInfoSettingsTimeRow0Col0
-	ret
-enteringInfoSettingsTimeRow0Col1Calling: call enteringInfoSettingsTimeRow0Col1
-	ret
-enteringInfoSettingsTimeRow0Col2Calling: call enteringInfoSettingsTimeRow0Col2
-	ret
-enteringInfoSettingsTimeRow0Col3Calling: call enteringInfoSettingsTimeRow0Col3
-	ret
-enteringInfoSettingsTimeRow0Col4Calling: call enteringInfoSettingsTimeRow0Col4
-	ret
-enteringInfoSettingsTimeRow0Col5Calling: call enteringInfoSettingsTimeRow0Col5
-	ret
-
-enteringInfoSettingsTimeRow0Col0:
+enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue:
 	lds acc, pressedKey
-	STS keyboardInputBuffer, acc;запись в буфер
-	;сдвиг курсора
+	ST y, acc
+	;в зависимости от положения курсора надо сдвинуть курсор
+	lds acc, cursorCoords
+	ldi ZH, high(enteringInfoSettingsTimeCursorPosSwitchTable)
+	ldi ZL, low(enteringInfoSettingsTimeCursorPosSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoSettingsTimeCursorPosSwitchOverflow
+
+enteringInfoSettingsTimeCursorPosSwitchContinue:
+	ijmp
+
+enteringInfoSettingsTimeKeysLettersCalling: call enteringInfoSettingsTimeKeysLetters
+	ret
+
+enteringInfoSettingsTimeCursorPosSwitchOverflow:
+	ldi acc, 1
+	add r31, acc
+	jmp enteringInfoSettingsTimeCursorPosSwitchContinue
+
+enteringInfoSettingsTimeCursorPosSwitchTable:
+enteringInfoSettingsTimeCursorPos0Calling: call enteringInfoSettingsTimeCursorPos0
+	ret
+enteringInfoSettingsTimeCursorPos1Calling: call enteringInfoSettingsTimeCursorPos1
+	ret
+enteringInfoSettingsTimeCursorPos2Calling: call enteringInfoSettingsTimeCursorPos2
+	ret
+enteringInfoSettingsTimeCursorPos3Calling: call enteringInfoSettingsTimeCursorPos3
+	ret
+enteringInfoSettingsTimeCursorPos4Calling: call enteringInfoSettingsTimeCursorPos4
+	ret
+enteringInfoSettingsTimeCursorPos5Calling: call enteringInfoSettingsTimeCursorPos5
+	ret
+enteringInfoSettingsTimeCursorPos6Calling: call enteringInfoSettingsTimeCursorPos6
+	ret
+
+enteringInfoSettingsTimeCursorPos0:
+	lds acc2, pressedKey	
+	cpi acc2, 3
+	brge enteringInfoSettingsTimeError
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeError:
+	ret
+
+enteringInfoSettingsTimeCursorPos1:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	ldi acc, 1
+	RCALL shiftCursorRight	;сдвиг курсора
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeCursorPos2:
+	lds acc2, pressedKey
+	cpi acc2, 6
+	brge enteringInfoSettingsTimeError
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeCursorPos3:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	ldi acc, 1
+	RCALL shiftCursorRight	;сдвиг курсора
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeCursorPos4:
+	lds acc2, pressedKey
+	cpi acc2, 6
+	brge enteringInfoSettingsTimeError
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeCursorPos5:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	RCALL shiftCursorSecondRow;сдвиг курсора на следующую строку
+	jmp enteringInfoSettingsTimeIncCursor;сохранение нового значение курсора
+
+enteringInfoSettingsTimeCursorPos6:
+	ldi acc, 1
+	RCALL shiftCursorRight;сдвиг курсора
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoSettingsTimeIncCursor:
+	lds acc, cursorCoords
+	inc acc
+	STS cursorCoords, acc
+	ret
+enteringInfoSettingsTimeKeysLetters:	
+	lds acc, pressedKey
+	cpi acc, 0x0E
+	brge enteringInfoSettingsTimeError
+
+	subi acc, 0x0A
+	ldi ZH, high(enteringInfoSettingsTimeKeysLettersSwitchTable)
+	ldi ZL, low(enteringInfoSettingsTimeKeysLettersSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoSettingsTimeKeysLettersSwitchOverflow
+
+enteringInfoSettingsTimeKeysLettersSwitchContinue:
+	ijmp
+
+enteringInfoSettingsTimeKeysLettersSwitchOverflow:
+	ldi acc, 1
+	add r31, acc
+	jmp enteringInfoSettingsTimeKeysLettersSwitchContinue
+
+enteringInfoSettingsTimeKeysLettersSwitchTable:
+	call enteringInfoSettingsTimeKeysLettersA
+	ret
+	call enteringInfoSettingsTimeKeysLettersB
+	ret
+	call enteringInfoSettingsTimeKeysLettersC
+	ret
+	call enteringInfoSettingsTimeKeysLettersD
+	ret
+
+enteringInfoSettingsTimeKeysLettersA:
+	;если значение не правильное (больше положенного) - то не изменять его
+
+	lds acc, cursorCoords
+	cpi acc, 6
+	brge enteringInfoSettingsTimeKeysLettersAWeekDay
+enteringInfoSettingsTimeKeysLettersAContinue:
+	
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	LD acc, Y+
+	cpi acc, 3
+	brge enteringInfoSettingsTimeKeysLettersA1
+	STS RTT_10H, acc
+enteringInfoSettingsTimeKeysLettersA1:	LD acc, Y+
+	STS RTT_1H, acc
+	LD acc, Y+
+	cpi acc, 3
+	brge enteringInfoSettingsTimeKeysLettersA2
+	STS RTT_10m, acc
+enteringInfoSettingsTimeKeysLettersA2:	LD acc, Y+
+	STS RTT_1m	, acc
+	LD acc, Y+
+	cpi acc, 3
+	brge enteringInfoSettingsTimeKeysLettersA3
+	STS RTT_10s, acc
+enteringInfoSettingsTimeKeysLettersA3:	LD acc, Y+
+	STS RTT_1s	, acc
+
+	cbr programFlags, 8
+	jmp enteringInfoSettingsTimeKeysLettersB 
+
+enteringInfoSettingsTimeKeysLettersAWeekDay:
+	subi acc, 6
+	STS RTT_24H, acc
+	rjmp enteringInfoSettingsTimeKeysLettersAContinue
+
+
+enteringInfoSettingsTimeKeysLettersB:
+	cbr programFlags, 8
+	ret	
+enteringInfoSettingsTimeKeysLettersC:
+	lds acc, cursorCoords
+	cpi acc, 6
+	brlo enteringInfoSettingsTimeKeyBindingError
+
+	cpi acc, 12
+	brge enteringInfoSettingsTimeKeyBindingError
+	
 	ldi acc, 1
 	RCALL shiftCursorRight
-	;сохранение нового значение курсора
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
-	ret
-enteringInfoSettingsTimeRow0Col1:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+1, acc;запись в буфер
-	;сдвиг курсора
-	ldi acc, 2
-	RCALL shiftCursorRight
-	;сохранение нового значение курсора
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
-	ret
-enteringInfoSettingsTimeRow0Col2:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+2, acc;запись в буфер
-	;сдвиг курсора
-	ldi acc, 1
-	RCALL shiftCursorRight
-	;сохранение нового значение курсора
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
-	ret
-enteringInfoSettingsTimeRow0Col3:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+3, acc;запись в буфер
-	;сдвиг курсора
-	ldi acc, 2
-	RCALL shiftCursorRight
-	;сохранение нового значение курсора
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
-	ret
-enteringInfoSettingsTimeRow0Col4:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+4, acc;запись в буфер
-	;сдвиг курсора
-	ldi acc, 1
-	RCALL shiftCursorRight
-	;сохранение нового значение курсора
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
-	ret
-enteringInfoSettingsTimeRow0Col5:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+5, acc;запись в буфер
-	;сдвиг курсора на следующую строку
-	RCALL shiftCursorSecondRow
-	;сохранение нового значение курсора
-	ldi acc, 0x10
-	STS cursorCoords, acc
-	ret
 
-enteringInfoSettingsTimeRow1Switch:
-	call enteringInfoSettingsTimeRow1Cols
-	ret
-
-enteringInfoSettingsTimeRow1Cols:
-	lds acc, pressedKey
-	STS keyboardInputBuffer+6, acc;запись в буфер
-	;сдвиг курсора
-	ldi acc, 1
-	RCALL shiftCursorRight
-	;сохранение нового значение курсора
 	lds acc, cursorCoords
 	inc acc
 	STS cursorCoords, acc
-	ret
+	ret	
+enteringInfoSettingsTimeKeysLettersD:
+	lds acc, cursorCoords
+	cpi acc, 7
+	brlo enteringInfoSettingsTimeKeyBindingError
 
-enteringInfoSettingsTimeSetInfo:
-	;выгрузить инфу из keyboardInputBuffer в нужные регистры
+	ldi acc, 1
+	RCALL shiftCursorLeft
+
+	lds acc, cursorCoords
+	dec acc
+	STS cursorCoords, acc
+	ret	
+
+enteringInfoSettingsTimeKeyBindingError:
 	ret
 ;-----ввод информации-----;

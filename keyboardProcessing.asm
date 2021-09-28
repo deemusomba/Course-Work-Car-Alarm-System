@@ -2,6 +2,8 @@
 keyBindings:
 	;тут какая-то логика для кнопок	
 	cbr programFlags, 16; по умолчанию, клавиша в режиме ввода не установлена
+	sbrc programFlags, 3
+	jmp keyBindingsEnteringInModes
 	mov acc, r0
 	cpi acc, 10
 	brge keyBindingsLetters
@@ -19,8 +21,7 @@ keyBindingsNumbers:
 	andi acc, 0x0F
 	cpi acc, 0;если правая часть (подменю) == 0, то вводим его
 	breq keyBindingsEnterSubMode
-	sbrc programFlags, 3
-	call keyBindingsEnteringInModes; иначе - это ввод внутри функции
+	; иначе - это ввод внутри функции
 	ret
 
 keyBindingsEnterMode: 			;ввод пункта меню
@@ -46,7 +47,9 @@ keyBindingsLetters:
 	subi acc, 10; --10
 	ldi ZH, high(keyBindingsLetterCallingTable)
 	ldi ZL, low(keyBindingsLetterCallingTable)
-	add r30, acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
 	;проверка на выходной перенос
 	brcs keyBindingsLettersOverflow
 
@@ -59,13 +62,6 @@ keyBindingsLettersOverflow:
 	jmp keyBindingsLettersContinue
 
 keyBindingsLetterCallingTable:	
-	rjmp keyBindingsLetterACalling
-	rjmp keyBindingsLetterBCalling
-	rjmp keyBindingsLetterCCalling
-	rjmp keyBindingsLetterDCalling
-	rjmp keyBindingsLetterECalling
-	rjmp keyBindingsLetterFCalling
-	
 keyBindingsLetterACalling: call keyBindingsLetterA
 	ret
 keyBindingsLetterBCalling: call keyBindingsLetterB
