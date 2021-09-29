@@ -181,6 +181,11 @@ modeSettingsSetAvgSpendingLabel:	;отображение подпункта настройки среднего рассх
 
 											;-----2. Автоподогрев-----;
 modeAutoHeatingSettings:
+	mov acc, menuModes
+	andi acc, 0x0f
+	cpi acc, 0
+	brne modeAutoHeatingSettingsSubsLabels
+
 	ldi acc, LOW(_labelMenu2<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu2<<1)
@@ -188,6 +193,62 @@ modeAutoHeatingSettings:
 	call DATA_WR_from_Z
 	ret
 
+modeAutoHeatingSettingsSubsLabels:
+	ldi ZH, high(modeAutoHeatingSettingsSubsLabelsSwitchTable)
+	ldi ZL, low(modeAutoHeatingSettingsSubsLabelsSwitchTable)
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs modeAutoHeatingSettingsSubsLabelsSwitchOverflow
+
+modeAutoHeatingSettingsSubsLabelsSwitchContinue:
+	ijmp
+modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
+	ldi acc, 1
+	add r31, acc
+	jmp modeAutoHeatingSettingsSubsLabelsSwitchContinue
+
+modeAutoHeatingSettingsSubsLabelsSwitchTable:
+	call modeAutoHeatingSettingsSetScheduleLabel
+	ret
+	call modeAutoHeatingSettingsSetTempControlLabel
+	ret
+	call modeAutoHeatingSettingsSetWorkingTimeLabel
+	ret
+	call modeAutoHeatingSettingsSetOtherSettingsLabel
+	ret
+
+modeAutoHeatingSettingsSetScheduleLabel:			;отображение подпункта настроек расписания
+	ldi acc, LOW(_labelMenu21<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu21<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+
+modeAutoHeatingSettingsSetTempControlLabel:		;отображение подпункта настройки по температуре
+	ldi acc, LOW(_labelMenu22<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu22<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+
+modeAutoHeatingSettingsSetWorkingTimeLabel:	;отображение подпункта настройки времени работы двигателя
+	ldi acc, LOW(_labelMenu23<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu23<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+modeAutoHeatingSettingsSetOtherSettingsLabel:;отображение подпункта настройки дополнительных опций
+	ldi acc, LOW(_labelMenu24<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu24<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
 											;-----Ввод в подрежимах-----;
 displayEnteringMenuMenuSwitchCalling: call displayEnteringMenuMenuSwitch
 	ret
@@ -322,12 +383,60 @@ modeSettingsSetAvgSpending:
 	ret
 
 displayEnteringMenu2Switch:
+	mov acc, menuModes
+	andi acc, 0x0f
+
+	ldi ZH, high(displayEnteringMenu2SwitchTable)
+	ldi ZL, low(displayEnteringMenu2SwitchTable)
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs displayEnteringMenu2SwitchOverflow
+
+displayEnteringMenu2SwitchContinue:
+	ijmp
+
+displayEnteringMenu2SwitchOverflow:
+	ldi acc, 1
+	add r31, acc
+	jmp displayEnteringMenu2SwitchContinue
+
+displayEnteringMenu2SwitchTable:
+	call modeAutoHeatingSettingsSetSchedule
+	ret
+	call modeAutoHeatingSettingsSetTempControl
+	ret
+	call modeAutoHeatingSettingsSetWorkingTime
+	ret
+	call modeAutoHeatingSettingsSetOtherSettings
 	ret
 
-displayInfoError:
-	ldi acc, LOW(_labelError<<1)
+modeAutoHeatingSettingsSetSchedule:
+	ldi acc, LOW(_labelMenu21In<<1)
 	mov ZL, acc
-	ldi acc, HIGH(_labelError<<1)
+	ldi acc, HIGH(_labelMenu21In<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+modeAutoHeatingSettingsSetTempControl:
+	ldi acc, LOW(_labelMenu22In<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu22In<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+modeAutoHeatingSettingsSetWorkingTime:
+	ldi acc, LOW(_labelMenu23In<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu23In<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z
+	ret
+modeAutoHeatingSettingsSetOtherSettings:
+	ldi acc, LOW(_labelMenu24In<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu24In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
 	ret
