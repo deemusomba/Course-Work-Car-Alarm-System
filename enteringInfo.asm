@@ -30,15 +30,15 @@ enteringInfoMenuSwitchOverflow:
 	jmp enteringInfoMenuSwitchContinue
 
 enteringInfoMenuSwitchTable:
-enteringInfoMenu1SwitchCalling: call enteringInfoMenu1Switch
+	call enteringInfoMenu1Switch
 	ret
-enteringInfoMenu2SwitchCalling: ;call enteringInfoMenu2Switch
+	;call enteringInfoMenu2Switch
 	ret
-enteringInfoMenu3SwitchCalling: ;call enteringInfoMenu3Switch
+	;call enteringInfoMenu3Switch
 	ret
-enteringInfoMenu4SwitchCalling: ;call enteringInfoMenu4Switch
+	;call enteringInfoMenu4Switch
 	ret
-enteringInfoMenu5SwitchCalling: ;call enteringInfoMenu5Switch
+	;call enteringInfoMenu5Switch
 	ret
 
 enteringInfoMenu1Switch:
@@ -61,11 +61,11 @@ enteringInfoMenu1SwitchOverflow:
 	jmp enteringInfoMenu1SwitchContinue
 
 enteringInfoMenu1SwitchTable:
-enteringInfoMenu1Submenu1Calling: call enteringInfoSettingsTimeCursorPosSwitch
+	call enteringInfoSettingsTimeCursorPosSwitch
 	ret
-enteringInfoMenu1Submenu2Calling: ;call modeSettingsSetTankVolume
+	;call modeSettingsSetTankVolume
 	ret
-enteringInfoMenu1Submenu3Calling: ;call modeSettingsSetAvgSpending
+	;call modeSettingsSetAvgSpending
 	ret
 
 
@@ -107,19 +107,19 @@ enteringInfoSettingsTimeCursorPosSwitchOverflow:
 	jmp enteringInfoSettingsTimeCursorPosSwitchContinue
 
 enteringInfoSettingsTimeCursorPosSwitchTable:
-enteringInfoSettingsTimeCursorPos0Calling: call enteringInfoSettingsTimeCursorPos0
+	call enteringInfoSettingsTimeCursorPos0
 	ret
-enteringInfoSettingsTimeCursorPos1Calling: call enteringInfoSettingsTimeCursorPos1
+	call enteringInfoSettingsTimeCursorPos1
 	ret
-enteringInfoSettingsTimeCursorPos2Calling: call enteringInfoSettingsTimeCursorPos2
+	call enteringInfoSettingsTimeCursorPos2
 	ret
-enteringInfoSettingsTimeCursorPos3Calling: call enteringInfoSettingsTimeCursorPos3
+	call enteringInfoSettingsTimeCursorPos3
 	ret
-enteringInfoSettingsTimeCursorPos4Calling: call enteringInfoSettingsTimeCursorPos4
+	call enteringInfoSettingsTimeCursorPos4
 	ret
-enteringInfoSettingsTimeCursorPos5Calling: call enteringInfoSettingsTimeCursorPos5
+	call enteringInfoSettingsTimeCursorPos5
 	ret
-enteringInfoSettingsTimeCursorPos6Calling: call enteringInfoSettingsTimeCursorPos6
+	call enteringInfoSettingsTimeCursorPos6
 	ret
 
 enteringInfoSettingsTimeCursorPos0:

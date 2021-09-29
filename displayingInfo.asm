@@ -29,17 +29,17 @@ updateDisplayMenuSwitchOverflow:
 	jmp updateDisplayMenuSwitchContinue
 
 updateDisplayMenuSwitchTable:
-updDisp0Calling: call modeMain
+	call modeMain
 	ret
-updDisp1Calling: call modeSettings
+	call modeSettings
 	ret
-updDisp2Calling: call modeAutoHeatingSettings
+	call modeAutoHeatingSettings
 	ret
-updDisp3Calling: call updDisp3
+	call updDisp3
 	ret
-updDisp4Calling: call updDisp4
+	call updDisp4
 	ret
-updDisp5Calling: call updDisp5
+	call updDisp5
 	ret
 
 updDisp3:
@@ -145,11 +145,11 @@ modeSettingsSubsLabelsSwitchOverflow:
 	jmp modeSettingsSubsLabelsSwitchContinue
 
 modeSettingsSubsLabelsSwitchTable:
-modeSettingsSetTimeLabelCalling:	call modeSettingsSetTimeLabel
+	call modeSettingsSetTimeLabel
 	ret
-modeSettingsSetTankVolumeLabelCalling: call modeSettingsSetTankVolumeLabel
+	call modeSettingsSetTankVolumeLabel
 	ret
-modeSettingsSetAvgSpendingLabelCalling: call modeSettingsSetAvgSpendingLabel
+	call modeSettingsSetAvgSpendingLabel
 	ret
 
 modeSettingsSetTimeLabel:			;отображение подпункта настроек времени и дня недели 
@@ -272,15 +272,15 @@ displayEnteringMenuMenuSwitchOverflow:
 	jmp displayEnteringMenuMenuSwitchContinue
 
 displayEnteringMenuMenuSwitchTable:
-displayEnteringMenu1SwitchCalling: call displayEnteringMenu1Switch
+	call displayEnteringMenu1Switch
 	ret
-displayEnteringMenu2SwitchCalling: call displayEnteringMenu2Switch
+	call displayEnteringMenu2Switch
 	ret
-displayEnteringMenu3SwitchCalling: ;call displayEnteringMenu3Switch
+	;call displayEnteringMenu3Switch
 	ret
-displayEnteringMenu4SwitchCalling: ;call displayEnteringMenu4Switch
+	;call displayEnteringMenu4Switch
 	ret
-displayEnteringMenu5SwitchCalling: ;call displayEnteringMenu5Switch
+	;call displayEnteringMenu5Switch
 	ret
 
 displayEnteringMenu1Switch:
@@ -303,11 +303,11 @@ displayEnteringMenu1SwitchOverflow:
 	jmp displayEnteringMenu1SwitchContinue
 
 displayEnteringMenu1SwitchTable:
-displayEnteringMenu1Submenu1Calling: call modeSettingsSetTime
+	call modeSettingsSetTime
 	ret
-displayEnteringMenu1Submenu2Calling: call modeSettingsSetTankVolume
+	call modeSettingsSetTankVolume
 	ret
-displayEnteringMenu1Submenu3Calling: call modeSettingsSetAvgSpending
+	call modeSettingsSetAvgSpending
 	ret
 											;-----1.1. Время-----;
 modeSettingsSetTime:
