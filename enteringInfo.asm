@@ -26,8 +26,7 @@ enteringInfoMenuSwitchContinue:
 	ijmp
 
 enteringInfoMenuSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp enteringInfoMenuSwitchContinue
 
 enteringInfoMenuSwitchTable:
@@ -58,8 +57,7 @@ enteringInfoMenu1SwitchContinue:
 	ijmp
 
 enteringInfoMenu1SwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp enteringInfoMenu1SwitchContinue
 
 enteringInfoMenu1SwitchTable:
@@ -85,8 +83,7 @@ enteringInfoSettingsTimeCursorPosSwitch:
 	brcs enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow
 	jmp enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue
 enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue:
 	lds acc, pressedKey
 	ST y, acc
@@ -106,8 +103,7 @@ enteringInfoSettingsTimeKeysLettersCalling: call enteringInfoSettingsTimeKeysLet
 	ret
 
 enteringInfoSettingsTimeCursorPosSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp enteringInfoSettingsTimeCursorPosSwitchContinue
 
 enteringInfoSettingsTimeCursorPosSwitchTable:
@@ -229,8 +225,7 @@ enteringInfoSettingsTimeError2:
 	ret
 
 enteringInfoSettingsTimeKeysLettersSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp enteringInfoSettingsTimeKeysLettersSwitchContinue
 
 enteringInfoSettingsTimeKeysLettersSwitchTable:

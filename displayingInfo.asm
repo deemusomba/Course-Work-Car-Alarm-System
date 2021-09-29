@@ -25,8 +25,7 @@ updateDisplayMenuSwitchContinue:
 	ijmp
 
 updateDisplayMenuSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp updateDisplayMenuSwitchContinue
 
 updateDisplayMenuSwitchTable:
@@ -109,8 +108,7 @@ modeMain:	;главное меню
 	brcs modeMainDayOfWeekOverflow
 	jmp modeMainContinue
 modeMainDayOfWeekOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 
 modeMainContinue:
 
@@ -143,8 +141,7 @@ modeSettingsSubsLabels:
 modeSettingsSubsLabelsSwitchContinue:
 	ijmp
 modeSettingsSubsLabelsSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp modeSettingsSubsLabelsSwitchContinue
 
 modeSettingsSubsLabelsSwitchTable:
@@ -205,8 +202,7 @@ modeAutoHeatingSettingsSubsLabels:
 modeAutoHeatingSettingsSubsLabelsSwitchContinue:
 	ijmp
 modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp modeAutoHeatingSettingsSubsLabelsSwitchContinue
 
 modeAutoHeatingSettingsSubsLabelsSwitchTable:
@@ -272,8 +268,7 @@ displayEnteringMenuMenuSwitchContinue:
 	ijmp
 
 displayEnteringMenuMenuSwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp displayEnteringMenuMenuSwitchContinue
 
 displayEnteringMenuMenuSwitchTable:
@@ -304,8 +299,7 @@ displayEnteringMenu1SwitchContinue:
 	ijmp
 
 displayEnteringMenu1SwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp displayEnteringMenu1SwitchContinue
 
 displayEnteringMenu1SwitchTable:
@@ -398,8 +392,7 @@ displayEnteringMenu2SwitchContinue:
 	ijmp
 
 displayEnteringMenu2SwitchOverflow:
-	ldi acc, 1
-	add r31, acc
+	inc acc
 	jmp displayEnteringMenu2SwitchContinue
 
 displayEnteringMenu2SwitchTable:

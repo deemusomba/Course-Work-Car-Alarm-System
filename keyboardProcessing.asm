@@ -57,8 +57,7 @@ keyBindingsLettersContinue:
 	ijmp
 
 keyBindingsLettersOverflow:
-	ldi acc, 1
-	add r30, acc
+	inc acc
 	jmp keyBindingsLettersContinue
 
 keyBindingsLetterCallingTable:	
