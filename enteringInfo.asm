@@ -247,25 +247,42 @@ enteringInfoSettingsTimeKeysLettersAContinue:
 	LDI YL, low(keyboardInputBuffer)
 	LDI YH, high(keyboardInputBuffer)
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA1
 	STS RTT_10H, acc
 	mov acc2, acc
 	ldi acc, 10
 	mul acc, acc2
 	mov acc2, r0
+enteringInfoSettingsTimeKeysLettersA1:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA2
 	STS RTT_1H, acc
 	add acc, acc2
 	STS RTT_24H, acc
+enteringInfoSettingsTimeKeysLettersA2:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA3
 	STS RTT_10m, acc
+enteringInfoSettingsTimeKeysLettersA3:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA4
 	STS RTT_1m	, acc
+enteringInfoSettingsTimeKeysLettersA4:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA5
 	STS RTT_10s, acc
+enteringInfoSettingsTimeKeysLettersA5:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoSettingsTimeKeysLettersA6
 	STS RTT_1s	, acc
-
-	;чистить буфер
+enteringInfoSettingsTimeKeysLettersA6:
+	call enteringInfoClearKeyInputBuffer
 
 	jmp enteringInfoSettingsTimeKeysLettersB 
 
@@ -324,6 +341,20 @@ enteringInfoWriteInKeyboardBufferContinue:
 	ST y, acc
 	ret
 
+enteringInfoClearKeyInputBuffer:
+	ldi acc, 0xff
+	ldi acc2, 0x11 
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+enteringInfoClearKeyInputBufferLoop:
+	ST y, acc
+	adiw y,1
+	dec acc2
+	cpi acc2, 0
+	brne enteringInfoClearKeyInputBufferLoop
+
+	ret
+
 enteringInfoMenu2Switch:
 	mov acc, menuModes
 	andi acc, 0x0f
@@ -346,9 +377,9 @@ enteringInfoMenu2SwitchOverflow:
 enteringInfoMenu2SwitchTable:
 	call enteringInfoAutoHeatingScheduleCursorPosSwitch
 	ret
-	;call modeSettingsSetTankVolume
+	;call mode2
 	ret
-	;call modeSettingsSetAvgSpending
+	;call mode3
 	ret
 
 enteringInfoAutoHeatingScheduleCursorPosSwitch:
@@ -420,7 +451,9 @@ enteringInfoAutoHeatingScheduleDaysInitContinue:
 	ldi acc, 0
 	STS keyboardInputBuffer+4, acc
 
-	jmp enteringInfoSettingsTimeIncCursor
+	ldi acc, 4
+	STS cursorCoords, acc
+	ret
 
 enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow:
 	inc r31
@@ -488,24 +521,44 @@ enteringInfoAutoHeatingScheduleKeysLettersSwitchTable:
 
 enteringInfoAutoHeatingScheduleKeysLettersA:
 
+	lds acc, cursorCoords
+	cpi acc, 4
+	brlo enteringInfoAutoHeatingScheduleDaysInitCalling
 	;TODO: если первое подменю, то перейти на второе, иначе вот то что снизу
 
 	LDI YL, low(keyboardInputBuffer)
 	LDI YH, high(keyboardInputBuffer)
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA1
 	STS AutoHeatingTimeSchedule_10h, acc
+enteringInfoAutoHeatingScheduleKeysLettersA1:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA2
 	STS AutoHeatingTimeSchedule_1h, acc
+enteringInfoAutoHeatingScheduleKeysLettersA2:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA3
 	STS AutoHeatingTimeSchedule_10m, acc
+enteringInfoAutoHeatingScheduleKeysLettersA3:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA4
 	STS AutoHeatingTimeSchedule_1m	, acc
+enteringInfoAutoHeatingScheduleKeysLettersA4:
 	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA5
 	STS AutoHeatingTimeSchedule_DayOfWeek, acc
-	
-	;чистить буфер
+enteringInfoAutoHeatingScheduleKeysLettersA5:
+	call enteringInfoClearKeyInputBuffer;чистить буфер
 
 	jmp enteringInfoAutoHeatingScheduleKeysLettersB
+
+enteringInfoAutoHeatingScheduleDaysInitCalling:
+	jmp enteringInfoAutoHeatingScheduleDaysInit
 
 enteringInfoAutoHeatingScheduleKeysLettersB:
 	jmp enteringInfoSettingsTimeKeysLettersB
