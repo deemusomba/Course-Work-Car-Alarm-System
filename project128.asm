@@ -8,9 +8,9 @@
 .def menuModes=R21;старшая часть отвечает за пункты меню, младшая - за подпункты
 .def acc=R16;аккумулятор
 .def acc2=R17;вспомогательный регистр для передачи данных между блоками
-.def programFlags=R22; 0|0|0|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
-.def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|0|keyScan|msAdd|0
-.def keyboardPointer=R24
+.def programFlags=R22; 0|0|carThing I dont remember|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
+.def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|autoHeatingTemp|autoHeatingSchedule|keyScan|msAdd
+.def functionsFlags=R24; 0|0|0|0|autoHeatingTime|autoHeatingTemp|autoHeatingSchedule|autoHeatingTurnOn
 
 .dseg
 .ORG SRAM_START+100
@@ -72,6 +72,7 @@ KeyTable:
 .include "keyboardProcessing.asm"
 .include "displayingInfo.asm"
 .include "enteringInfo.asm"
+.include "autoHeating.asm"
 start:
 	ldi acc,low(ramend)
 	out spl,acc
@@ -91,8 +92,8 @@ start:
 	out ddre, acc
 	;ldi acc,0x01
 	;out eimsk,acc;разрешение локального прерывания по int0
-	ldi acc,0xF8
-	out ddrd,acc;вход на ввод int0, int1, int2
+	ldi acc,0b00000001
+	out ddrd,acc;pinD на вывод
 	ldi acc, 0x50; для timer2 по переполнению + OCF1A
 	out timsk,acc;разрешение локальных прерываний для таймеров
 
@@ -113,20 +114,20 @@ start:
 	STS RTT_1H, acc
 	STS RTT_10H, acc
 	STS RTT_24H, acc
-
 	STS AutoHeatingTimeSchedule_10h, acc
 	STS AutoHeatingTimeSchedule_1h, acc
 	STS AutoHeatingTimeSchedule_10m, acc
 	STS AutoHeatingTimeSchedule_1m, acc
-	
+
 	STS KeyScanTimer, acc
 	STS KeyDebouncingTimer, acc
 
-	ldi acc, 0x00
 	STS pressedKey, acc	
 	STS cursorCoords, acc
-	
 	STS keyboardInputBuffer, acc
+	
+	ldi acc, 0xff
+	STS AutoHeatingTimeSchedule_DayOfWeek, acc
 
 	ldi acc, 0xff
 	ldi acc2, 0x11 
@@ -137,10 +138,7 @@ startkeyboardInputBufferInit:
 	adiw y,1
 	dec acc2
 	cpi acc2, 0
-	brne startkeyboardInputBufferInit
-
-	ldi acc, 0x01
-	out pind, acc;  если 1 в младшем бите, то не нажато	  	
+	brne startkeyboardInputBufferInit	  	
 
 	LDI r16, 0xff
 	OUT DDRE, r16
@@ -195,13 +193,14 @@ backLoopAfterRTTFlagsScan:
 	call updateDisplay
 	sbrc programFlags, 3
 	call enteringInfo
+	sbrc functionsFlags, 0
+	call autoHeatingMain
 	jmp backgroundLoop
 
 ;-----конец обработки флагов-----;
 
 updateDisplay:
-	cbr programFlags,4; очистка флага "обновить дисплей"
-		
+	cbr programFlags,4; очистка флага "обновить дисплей"	
 	call updatingDisplay
 	ret
 ;-----КЛАВИАТУРА-----;
@@ -321,7 +320,7 @@ RTT_main:
 RTT_KeyScanTimer:
 	;программный таймер опроса клавиатуры
 	lds acc, KeyScanTimer
-	SUBI acc, (-1)
+	inc acc
 	STS KeyScanTimer, acc
 	cpi acc, 10
 	brne RTT_ProgrammTimer
@@ -334,7 +333,7 @@ RTT_ProgrammTimer:
 	cbr RTTFlags,1;снятие флага "добавилась мсекунда"
 
 	lds acc, RTT_mS
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_mS, acc
 	;проверка на четверть секунды
 	cpi acc, 250
@@ -344,7 +343,7 @@ RTT_ProgrammTimer:
 	;тут можно выставить какой-нибудь флаг
 
 	lds acc, RTT_qS
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_qS, acc
 	;проверка на секунду
 	cpi acc, 4
@@ -357,7 +356,7 @@ RTT_ProgrammTimer:
 	STS RTT_qS, acc
 
 	lds acc, RTT_1S
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_1S, acc
 	;проверка на количество секунд
 	cpi acc, 10
@@ -366,7 +365,7 @@ RTT_ProgrammTimer:
 	STS RTT_1S, acc
 
 	lds acc, RTT_10S
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_10S, acc
 	;проверка на количество десятков секунд
 	cpi acc, 6
@@ -374,8 +373,10 @@ RTT_ProgrammTimer:
 	ldi acc, 0
 	STS RTT_10S, acc
 
+	call RTT_checkSchedule
+
 	lds acc, RTT_1M
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_1M, acc
 	;проверка на количество минут
 	cpi acc, 10
@@ -387,7 +388,7 @@ RTT_end:
 	jmp backLoopAfterRTTFlagsScan
 RTT_continue:
 	lds acc, RTT_10M
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_10M, acc
 	;проверка на количество десятков минут
 	cpi acc, 6
@@ -396,7 +397,7 @@ RTT_continue:
 	STS RTT_10M, acc
 
 	lds acc, RTT_24H
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_24H, acc
 	;проверка суток
 	cpi acc, 24
@@ -404,7 +405,7 @@ RTT_continue:
 
 RTT_continue2:
 	lds acc, RTT_1H
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_1H, acc
 	;проверка часов
 	cpi acc, 10
@@ -413,7 +414,7 @@ RTT_continue2:
 	STS RTT_1H, acc
 
 	lds acc, RTT_10H
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_10H, acc
 	;проверка на количество десятков часов
 	cpi acc, 3
@@ -430,28 +431,56 @@ RTT_24h_inc:
 	STS RTT_1H, acc
 	STS RTT_10H, acc
 	lds acc, RTT_7Days
-	SUBI acc, (-1)
+	inc acc
 	STS RTT_7Days, acc
 	;проверка кол-во дней
 	cpi acc, 7
 	brne RTT_end2
 	ldi acc, 0
 	STS RTT_7Days, acc
+	call RTT_checkSchedule
 	jmp backLoopAfterRTTFlagsScan
 ;--------ЧАСЫ--------;
 
+RTT_checkSchedule:
+	lds acc, RTT_7Days
+	lds acc2, AutoHeatingTimeSchedule_DayOfWeek
+
+	lsl acc2
+RTT_checkScheduleLoop:
+	lsl acc2
+	brcs RTT_checkScheduleLoopBreak
+	cpi acc, 0
+	breq RTT_checkScheduleRet
+	dec acc
+	jmp RTT_checkScheduleLoop
+
+RTT_checkScheduleLoopBreak:
+	lds acc, RTT_10h
+	lds acc2, AutoHeatingTimeSchedule_10h
+	cp acc, acc2
+	brne RTT_checkScheduleRet
+	lds acc, RTT_1h
+	lds acc2, AutoHeatingTimeSchedule_1h
+	cp acc, acc2
+	brne RTT_checkScheduleRet
+	lds acc, RTT_10m
+	lds acc2, AutoHeatingTimeSchedule_10m
+	cp acc, acc2
+	brne RTT_checkScheduleRet
+	lds acc, RTT_1m
+	lds acc2, AutoHeatingTimeSchedule_1m
+	cp acc, acc2
+	brne RTT_checkScheduleRet
+	
+	sbr functionsFlags, 1
+	sbr functionsFlags, 2
+
+RTT_checkScheduleRet:	ret
+
 carScanning:
 	jmp backLoopAfterCarScan
-	in acc, pinA; CentralLock|GlassBreaking|Bumper|LeftFront|RightFront|LeftBack|RightBack|Trunk
-	lsl acc ;сдвиг логический левый
-	brcc carScanCL1; если выходной перенос = 1
-carScanCL1:
-	lsl acc;
-	brcc carScanGB0; если выходной перенос = 0
-carScanGB0:
-	
-carScanAlarm:
-	ldi acc, 0;pass
+
 
 	;часть про вывод через последовательный вывод, но это не понадобится скорее всего
 	;ldi acc, (1<<0)|(1<<1)|(1<<2)
@@ -473,40 +502,40 @@ displayRecodingTable:
 _labelTest:
 .DB 'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н',1,0,'О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я','e'
 _labelError:
-.DB "ПРОИЗОШЛА", 1,0, "ПРОГ. ОШИБКА"
+.DB "ПРОИЗОШЛА", 1,0, "ПРОГ. ОШИБКА",'e'
 _labelMainMenu:
-.DB "00:00:00",'e'
+.DB "00:00:00",'e',0
 _labelsDaysOfTheWeek:
-.DB "ПН",'e',"ВТ",'e',"СР",'e',"ЧТ",'e',"ПТ",'e',"СБ",'e',"ВС",'e'
+.DB "ПН",'e',"ВТ",'e',"СР",'e',"ЧТ",'e',"ПТ",'e',"СБ",'e',"ВС",'e',0
 _labelMenu1:
 .DB "1.УСТАНОВКИ", 1, 0, "А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu11:
 .DB "1.1 ВРЕМЯ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu11In:
-.DB "ВРЕМЯ 00:00:00",1,0,"ПВСЧПСВ  A-V B-X",'e'
+.DB "ВРЕМЯ 00:00:00",1,0,"ПВСЧПСВ  A-V B-X",'e',0
 _labelMenu12:
-.DB "1.2 ОБЪЕМ БАКА",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "1.2 ОБЪЕМ БАКА",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu13:
 .DB "1.3 СР.РАСХОД",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu2:
-.DB "2.АВТОПОДОГРЕВ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "2.АВТОПОДОГРЕВ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu21:
-.DB "2.1 ПО РАСПИСАН.",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "2.1 ПО РАСПИСАН.",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu21In:
 .DB "ВРЕМЯ 00:00",1,8,"A-СЛ B-X",'e'
 _labelMenu21In2:
 .DB "ПВСЧПСВ  С-V D-X",1,7,"A-ОК B-ВХ",'e'
 _labelMenu22:
-.DB "2.2 ПО ТЕМП-РЕ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "2.2 ПО ТЕМП-РЕ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu22In:
-.DB "ВКЛ -15С",1,0,"ВЫКЛ 40С A-V B-X",'e'
+.DB "ВКЛ -15С",1,0,"ВЫКЛ 40С A-V B-X",'e',0
 _labelMenu23:
-.DB "2.3 ПО ВР.РАБОТЫ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "2.3 ПО ВР.РАБОТЫ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu23In:
 .DB "РАБОТАТЬ 10МИНУТ",1,9,"A-V B-X",'e'
 _labelMenu24:
-.DB "2.4 ДОП. ОПЦИИ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
+.DB "2.4 ДОП. ОПЦИИ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu24In:
-.DB "П:V С:V",0,12,"A-ОК",1,3,"C-V D-X В-ВЫХ",'e'
+.DB "П:V С:V",0,12,"A-ОК",1,3,"C-V D-X В-ВЫХ",'e',0
 
 
