@@ -156,6 +156,11 @@ startkeyboardInputBufferInit:
 	RCALL	CMD_WR
 	LDI		R17,0x02;(1<<LCD_HOME)	
 	RCALL	CMD_WR
+	
+	;инициализация spi	
+
+	ldi acc, (1<<SPE)|(1<<MSTR);|(1<<SPR0) 
+	out SPCR, acc
 
 	sei; разрешение прерываний   
 
@@ -480,21 +485,17 @@ RTT_checkScheduleRet:	ret
 
 carScanning:
 	jmp backLoopAfterCarScan
-
+updateSevenSigmDisplay: ;в acc (r16) находится то, что нужно отобразить
+	out SPDR, acc
+updateSevenSigmDisplayLoop:
+	sbis SPSR, SPIF
+	rjmp updateSevenSigmDisplayLoop
+	sbi portB, 0
+	cbi portB, 0
+	ret
 
 	;часть про вывод через последовательный вывод, но это не понадобится скорее всего
-	;ldi acc, (1<<0)|(1<<1)|(1<<2)
-	;out DDRB, acc
-;	ldi acc, (1<<SPE)|(1<<MSTR);|(1<<SPR0) 
-	;out SPCR, acc
-	;ldi acc, 0xF9
-	;out SPDR, acc
 
-;bkdr1:
-	;sbis SPSR, SPIF
-	;rjmp bkdr1
-	;ldi acc, 0x01
-	;out PINB, acc
 
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0x75,0xAB,0xAC,0xAC,0xAD,0xAE,0x62, 0xAF,0xB0,0xB1
