@@ -89,7 +89,7 @@ keyBindingsLetterA:
 	sbr programFlags, 8;	установка флага перехода в подрежим
 	sbr programFlags, 4; установка флага "обновить дисплей"
 	jmp keyBindingsRet
-
+keyBindingsRet2: ret
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
 	mov acc, menuModes
 	andi acc, 0xF0
@@ -107,15 +107,8 @@ keyBindingsLetterB:
 	cpi acc, 0				;если подпункт не выбран, то назад в главное меню
 	breq keyBindingsBackFromMode
 	;значит все выбрано
-	
-	sbrc programFlags, 3	;если флаг "в режиме" установлен, то сброс его
-	jmp keyBindingsLetterBExit	;выход из подпункта и переход к выбору подпунктов
 		
 	andi menuModes, 0xf0	;иначе выходим из выбора подпунктов обратно к выбору пунктов меню	
-	jmp keyBindingsRet2
-
-keyBindingsLetterBExit:	
-	cbr programFlags, 8
 	jmp keyBindingsRet2
 
 keyBindingsBackFromMode:
@@ -123,25 +116,59 @@ keyBindingsBackFromMode:
 	jmp keyBindingsRet2
 
 keyBindingsLetterC:
-	jmp keyBindingsRet2
-keyBindingsLetterD:
+	mov acc, menuModes
+	andi acc, 0x0f
+	cpi acc, 0
+	breq keyBindingsLetterCDecMode
+	jmp keyBindingsLetterCDecSubMode
+
+keyBindingsLetterCDecMode:
 	mov acc, menuModes
 	andi acc, 0xf0
-	cpi acc, 0x60; количество режимов, но +1
-	brge keyBindingsBackToMainMenu
+	cpi acc, 0
+	brlo keyBindingsRet2
+
+	mov acc, menuModes
+	subi acc, 0x10
+	mov menuModes, acc
+	jmp keyBindingsRet2
+
+keyBindingsLetterCDecSubMode:
+	dec menuModes
+	jmp keyBindingsRet2
+
+
+keyBindingsLetterD:
+	mov acc, menuModes
+	andi acc, 0x0f
+	cpi acc, 0
+	breq keyBindingsLetterDIncMode
+	jmp keyBindingsLetterDIncSubMode
+
+keyBindingsLetterDIncMode:
+	mov acc, menuModes
+	andi acc, 0xf0
+	cpi acc, 0x50
+	brge keyBindingsBackFromMode
+
+	mov acc, menuModes
 	ldi acc2, 0x10
 	add acc, acc2
 	mov menuModes, acc
-	jmp keyBindingsRet2
+	jmp keyBindingsRet3
+
+keyBindingsLetterDIncSubMode:
+	inc menuModes
+
+	jmp keyBindingsRet3
+
 keyBindingsBackToMainMenu:
 	ldi acc, 0x00
 	mov menuModes, acc
-	jmp keyBindingsRet2
-keyBindingsLetterE:
-	ret
-keyBindingsLetterF:
-	ret
-keyBindingsRet2: jmp keyBindingsRet
+	jmp keyBindingsRet3
+keyBindingsLetterE:	ret
+keyBindingsLetterF:	ret
+keyBindingsRet3: ret
 keyBindingsEnteringInModes:
 	sbr programFlags, 16
 	STS pressedKey, r0

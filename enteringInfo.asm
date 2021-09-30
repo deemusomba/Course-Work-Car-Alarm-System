@@ -445,6 +445,8 @@ enteringInfoAutoHeatingScheduleDaysInitContinue:
 	dec acc
 	cpi acc, 0
 	brne enteringInfoAutoHeatingScheduleDaysInitLoop
+	
+	call enteringInfoAutoHeatingScheduleDaysInitLoop
 
 	pop acc2
 	RCALL shiftCursorSecondRow
