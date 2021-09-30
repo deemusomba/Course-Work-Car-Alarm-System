@@ -25,6 +25,12 @@ RTT_10H: .BYTE 1;десятки часов
 RTT_24H: .BYTE 1;подсчет суток (24 часа)
 RTT_7Days: .BYTE 1; день недели
 
+AutoHeatingTimeSchedule_10h: .BYTE 1
+AutoHeatingTimeSchedule_1h: .BYTE 1
+AutoHeatingTimeSchedule_10m: .BYTE 1
+AutoHeatingTimeSchedule_1m: .BYTE 1
+AutoHeatingTimeSchedule_DayOfWeek: .BYTE 1
+
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
 
@@ -107,6 +113,11 @@ start:
 	STS RTT_1H, acc
 	STS RTT_10H, acc
 	STS RTT_24H, acc
+
+	STS AutoHeatingTimeSchedule_10h, acc
+	STS AutoHeatingTimeSchedule_1h, acc
+	STS AutoHeatingTimeSchedule_10m, acc
+	STS AutoHeatingTimeSchedule_1m, acc
 	
 	STS KeyScanTimer, acc
 	STS KeyDebouncingTimer, acc
@@ -482,7 +493,9 @@ _labelMenu2:
 _labelMenu21:
 .DB "2.1 ПО РАСПИСАН.",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu21In:
-.DB "ВРЕМЯ 00:00 ЧЧММ",1,0,"ПВСЧПСВ  A-V B-X",'e'
+.DB "ВРЕМЯ 00:00",1,8,"A-СЛ B-X",'e'
+_labelMenu21In2:
+.DB "ПВСЧПСВ  С-V D-X",1,7,"A-ОК B-ВХ",'e'
 _labelMenu22:
 .DB "2.2 ПО ТЕМП-РЕ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu22In:

@@ -57,7 +57,7 @@ keyBindingsLettersContinue:
 	ijmp
 
 keyBindingsLettersOverflow:
-	inc acc
+	inc r31
 	jmp keyBindingsLettersContinue
 
 keyBindingsLetterCallingTable:	

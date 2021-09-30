@@ -26,13 +26,13 @@ enteringInfoMenuSwitchContinue:
 	ijmp
 
 enteringInfoMenuSwitchOverflow:
-	inc acc
+	inc r31
 	jmp enteringInfoMenuSwitchContinue
 
 enteringInfoMenuSwitchTable:
 	call enteringInfoMenu1Switch
 	ret
-	;call enteringInfoMenu2Switch
+	call enteringInfoMenu2Switch
 	ret
 	;call enteringInfoMenu3Switch
 	ret
@@ -57,7 +57,7 @@ enteringInfoMenu1SwitchContinue:
 	ijmp
 
 enteringInfoMenu1SwitchOverflow:
-	inc acc
+	inc r31
 	jmp enteringInfoMenu1SwitchContinue
 
 enteringInfoMenu1SwitchTable:
@@ -74,21 +74,13 @@ enteringInfoSettingsTimeCursorPosSwitch:
 	lds acc, pressedKey
 	cpi acc, 0x0A
 	brge enteringInfoSettingsTimeKeysLettersCalling
-
-	lds acc, cursorCoords
-	LDI YL, low(keyboardInputBuffer)
-	LDI YH, high(keyboardInputBuffer)
 	
-	add YL, acc
-	brcs enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow
-	jmp enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue
-enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringOverflow:
-	inc acc
-enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue:
-	lds acc, pressedKey
-	ST y, acc
+	call enteringInfoWriteInKeyboardBuffer	
+
 	;в зависимости от положения курсора надо сдвинуть курсор
 	lds acc, cursorCoords
+	cpi acc, 6
+	brge enteringInfoSettingsTimeError
 	ldi ZH, high(enteringInfoSettingsTimeCursorPosSwitchTable)
 	ldi ZL, low(enteringInfoSettingsTimeCursorPosSwitchTable)
 	ldi acc2, 3
@@ -99,12 +91,13 @@ enteringInfoSettingsTimeRow0SwitchkeyboardInputBufferEnteringContinue:
 enteringInfoSettingsTimeCursorPosSwitchContinue:
 	ijmp
 
+enteringInfoSettingsTimeCursorPosSwitchOverflow:
+	inc r31
+	jmp enteringInfoSettingsTimeCursorPosSwitchContinue
+
 enteringInfoSettingsTimeKeysLettersCalling: call enteringInfoSettingsTimeKeysLetters
 	ret
 
-enteringInfoSettingsTimeCursorPosSwitchOverflow:
-	inc acc
-	jmp enteringInfoSettingsTimeCursorPosSwitchContinue
 
 enteringInfoSettingsTimeCursorPosSwitchTable:
 	call enteringInfoSettingsTimeCursorPos0
@@ -119,8 +112,6 @@ enteringInfoSettingsTimeCursorPosSwitchTable:
 	ret
 	call enteringInfoSettingsTimeCursorPos5
 	ret
-	call enteringInfoSettingsTimeCursorPos6
-	ret
 
 enteringInfoSettingsTimeCursorPos0:
 	lds acc2, pressedKey	
@@ -133,6 +124,18 @@ enteringInfoSettingsTimeCursorPos0:
 	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
 
 enteringInfoSettingsTimeError:
+	lds acc, cursorCoords
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	
+	add YL, acc
+	brcs enteringInfoSettingsTimeErrorOverflow
+	jmp enteringInfoSettingsTimeErrorContinue
+enteringInfoSettingsTimeErrorOverflow:
+	inc r29
+enteringInfoSettingsTimeErrorContinue:
+	ldi acc, 0xFF 
+	ST y, acc
 	ret
 
 enteringInfoSettingsTimeCursorPos1:
@@ -195,11 +198,6 @@ enteringInfoSettingsTimeCursorPos5:
 	RCALL shiftCursorSecondRow;сдвиг курсора на следующую строку
 	jmp enteringInfoSettingsTimeIncCursor;сохранение нового значение курсора
 
-enteringInfoSettingsTimeCursorPos6:
-	ldi acc, 1
-	RCALL shiftCursorRight;сдвиг курсора
-	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
-
 enteringInfoSettingsTimeIncCursor:
 	lds acc, cursorCoords
 	inc acc
@@ -225,7 +223,7 @@ enteringInfoSettingsTimeError2:
 	ret
 
 enteringInfoSettingsTimeKeysLettersSwitchOverflow:
-	inc acc
+	inc r31
 	jmp enteringInfoSettingsTimeKeysLettersSwitchContinue
 
 enteringInfoSettingsTimeKeysLettersSwitchTable:
@@ -239,7 +237,7 @@ enteringInfoSettingsTimeKeysLettersSwitchTable:
 	ret
 
 enteringInfoSettingsTimeKeysLettersA:
-	;если значение не правильное (больше положенного) - то не изменять его
+	;если значение не менялось == ff, то и не менять данные
 
 	lds acc, cursorCoords
 	cpi acc, 6
@@ -266,7 +264,9 @@ enteringInfoSettingsTimeKeysLettersAContinue:
 	STS RTT_10s, acc
 	LD acc, Y+
 	STS RTT_1s	, acc
-	cbr programFlags, 8
+
+	;чистить буфер
+
 	jmp enteringInfoSettingsTimeKeysLettersB 
 
 enteringInfoSettingsTimeKeysLettersAWeekDay:
@@ -277,13 +277,12 @@ enteringInfoSettingsTimeKeysLettersAWeekDay:
 
 enteringInfoSettingsTimeKeysLettersB:
 	cbr programFlags, 8
-	LDI		R17,0b00001100; включить мигание и подсветку курсора
+	sbr programFlags, 4
+	LDI		R17,0b00001100; выключить мигание и подсветку курсора
 	RCALL	CMD_WR
 	ret	
 enteringInfoSettingsTimeKeysLettersC:
 	lds acc, cursorCoords
-	cpi acc, 6
-	brlo enteringInfoSettingsTimeKeyBindingError
 
 	cpi acc, 12
 	brge enteringInfoSettingsTimeKeyBindingError
@@ -310,4 +309,250 @@ enteringInfoSettingsTimeKeysLettersD:
 
 enteringInfoSettingsTimeKeyBindingError:
 	ret
+enteringInfoWriteInKeyboardBuffer:
+	lds acc, cursorCoords
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	
+	add YL, acc
+	brcs enteringInfoWriteInKeyboardBufferOverflow
+	jmp enteringInfoWriteInKeyboardBufferContinue
+enteringInfoWriteInKeyboardBufferOverflow:
+	inc r29
+enteringInfoWriteInKeyboardBufferContinue:
+	lds acc, pressedKey
+	ST y, acc
+	ret
+
+enteringInfoMenu2Switch:
+	mov acc, menuModes
+	andi acc, 0x0f
+
+	ldi ZH, high(enteringInfoMenu2SwitchTable)
+	ldi ZL, low(enteringInfoMenu2SwitchTable)
+	dec acc
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoMenu2SwitchOverflow
+
+enteringInfoMenu2SwitchContinue:
+	ijmp
+
+enteringInfoMenu2SwitchOverflow:
+	inc r31
+	jmp enteringInfoMenu2SwitchContinue
+
+enteringInfoMenu2SwitchTable:
+	call enteringInfoAutoHeatingScheduleCursorPosSwitch
+	ret
+	;call modeSettingsSetTankVolume
+	ret
+	;call modeSettingsSetAvgSpending
+	ret
+
+enteringInfoAutoHeatingScheduleCursorPosSwitch:
+	;занести значение клавиши в буфер взависимости от курсора
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brge enteringInfoAutoHeatingScheduleKeysLettersCalling 
+	
+	call enteringInfoWriteInKeyboardBuffer	
+
+	;в зависимости от положения курсора надо сдвинуть курсор
+
+	lds acc, cursorCoords
+	cpi acc, 4
+	brge enteringInfoAutoHeatingScheduleError
+	ldi ZH, high(enteringInfoAutoHeatingScheduleCursorPosSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingScheduleCursorPosSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchContinue:
+	ijmp
+
+enteringInfoAutoHeatingScheduleError:
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersCalling: call enteringInfoAutoHeatingScheduleKeysLetters
+	ret
+enteringInfoAutoHeatingScheduleDaysInit:
+	LDI		R17,0b00000010; вернуть курсор в начальное положение
+	RCALL	CMD_WR
+
+	ldi acc, LOW(_labelMenu21In2<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu21In2<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z	
+		
+	LDI		R17,(1<<7)|(0+0x40*1)
+	RCALL	CMD_WR
+
+	ldi acc, 7
+	;push acc
+	LDS acc2, AutoHeatingTimeSchedule_DayOfWeek
+	lsl acc2
+	push acc2
+enteringInfoAutoHeatingScheduleDaysInitLoop:
+	pop acc2
+	lsl acc2
+	push acc2
+	brcs enteringInfoAutoHeatingScheduleDaysInitV
+	
+	ldi acc2, 0x58; X
+	jmp enteringInfoAutoHeatingScheduleDaysInitContinue
+enteringInfoAutoHeatingScheduleDaysInitV:
+	ldi acc2, 0x56; V
+enteringInfoAutoHeatingScheduleDaysInitContinue:
+	push acc
+	RCALL DATA_WR
+	pop acc
+	dec acc
+	cpi acc, 0
+	brne enteringInfoAutoHeatingScheduleDaysInitLoop
+
+	pop acc2
+	RCALL shiftCursorSecondRow
+	ldi acc, 0
+	STS keyboardInputBuffer+4, acc
+
+	jmp enteringInfoSettingsTimeIncCursor
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingScheduleCursorPosSwitchContinue
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchTable:
+	call enteringInfoAutoHeatingScheduleCursorPos0
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos1
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos2
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos3
+	ret
+
+enteringInfoAutoHeatingScheduleCursorPos0:
+	jmp enteringInfoSettingsTimeCursorPos0
+
+enteringInfoAutoHeatingScheduleCursorPos1:
+	jmp enteringInfoSettingsTimeCursorPos1
+
+enteringInfoAutoHeatingScheduleCursorPos2:
+	jmp enteringInfoSettingsTimeCursorPos2
+
+enteringInfoAutoHeatingScheduleCursorPos3:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoAutoHeatingScheduleDaysInit
+
+enteringInfoAutoHeatingScheduleKeysLetters:
+	lds acc, pressedKey
+	cpi acc, 0x0E
+	brge enteringInfoSettingsTimeError3
+
+	subi acc, 0x0A
+	ldi ZH, high(enteringInfoAutoHeatingScheduleKeysLettersSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingScheduleKeysLettersSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingScheduleKeysLettersSwitchOverflow
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchContinue:
+	ijmp
+
+enteringInfoSettingsTimeError3:
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchOverflow:
+	inc r31
+	jmp enteringInfoSettingsTimeKeysLettersSwitchContinue
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchTable:
+	call enteringInfoAutoHeatingScheduleKeysLettersA
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersB
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersC
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersD
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersA:
+
+	;TODO: если первое подменю, то перейти на второе, иначе вот то что снизу
+
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	LD acc, Y+
+	STS AutoHeatingTimeSchedule_10h, acc
+	LD acc, Y+
+	STS AutoHeatingTimeSchedule_1h, acc
+	LD acc, Y+
+	STS AutoHeatingTimeSchedule_10m, acc
+	LD acc, Y+
+	STS AutoHeatingTimeSchedule_1m	, acc
+	LD acc, Y+
+	STS AutoHeatingTimeSchedule_DayOfWeek, acc
+	
+	;чистить буфер
+
+	jmp enteringInfoAutoHeatingScheduleKeysLettersB
+
+enteringInfoAutoHeatingScheduleKeysLettersB:
+	jmp enteringInfoSettingsTimeKeysLettersB
+
+enteringInfoAutoHeatingScheduleKeysLettersC:
+	ldi acc2, 0x56; V
+	RCALL DATA_WR
+	
+	call enteringInfoAutoHeatingScheduleWriteData
+	
+	lds acc, cursorCoords
+	inc acc
+	STS cursorCoords, acc
+	ret	
+enteringInfoAutoHeatingScheduleKeysLettersD:
+	ldi acc2, 0x58; X
+	RCALL DATA_WR
+	
+	lds acc, cursorCoords
+	inc acc
+	STS cursorCoords, acc
+	ret	
+
+enteringInfoAutoHeatingScheduleKeyBindingError:
+	ret
+
+enteringInfoAutoHeatingScheduleWriteData:
+	ldi acc2, 0b01000000
+
+
+	lds acc, cursorCoords
+	subi acc, 4
+	push acc
+enteringInfoAutoHeatingScheduleWriteDataLoop:
+	
+	pop acc
+	cpi acc, 0
+	breq enteringInfoAutoHeatingScheduleWriteDataContinue
+	dec acc
+	push acc
+
+	lsr acc2
+	jmp enteringInfoAutoHeatingScheduleWriteDataLoop
+enteringInfoAutoHeatingScheduleWriteDataContinue:
+	LDS acc, keyboardInputBuffer+4
+	OR acc, acc2
+	STS keyboardInputBuffer+4, acc
+	ret
+
 ;-----ввод информации-----;
