@@ -68,7 +68,6 @@ enteringInfoMenu1SwitchTable:
 	;call modeSettingsSetAvgSpending
 	ret
 
-
 enteringInfoSettingsTimeCursorPosSwitch:
 	;занести значение клавиши в буфер взависимости от курсора
 	lds acc, pressedKey
@@ -97,7 +96,6 @@ enteringInfoSettingsTimeCursorPosSwitchOverflow:
 
 enteringInfoSettingsTimeKeysLettersCalling: call enteringInfoSettingsTimeKeysLetters
 	ret
-
 
 enteringInfoSettingsTimeCursorPosSwitchTable:
 	call enteringInfoSettingsTimeCursorPos0

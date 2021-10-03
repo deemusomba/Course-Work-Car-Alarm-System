@@ -73,6 +73,8 @@ KeyTable:
 .include "displayingInfo.asm"
 .include "enteringInfo.asm"
 .include "autoHeating.asm"
+.include "modeSettings.asm"
+.include "modeAutoHeatingSettings.asm"
 start:
 	ldi acc,low(ramend)
 	out spl,acc
@@ -515,25 +517,27 @@ _labelMenu11:
 _labelMenu11In:
 .DB "бпелъ 00:00:00",1,0,"обявояб  A-V B-X",'e',0
 _labelMenu12:
-.DB "1.2 назел аюйю",1,0,"ю-бOирх  B-мюгюд",'e',0
+.DB "1.2 ножхх",1,0,"ю-бOирх  B-мюгюд",'e'
+_labelMenu12In:
+.DB "A",1,0,"V",0,9,"я-V D-X",1,7,"A-нй B-бу",'e',0
 _labelMenu13:
 .DB "1.3 яп.пюяунд",1,0,"ю-бOирх  B-мюгюд",'e'
 _labelMenu2:
 .DB "2.юбрнонднцпеб",1,0,"ю-бOирх  B-мюгюд",'e',0
 _labelMenu21:
-.DB "2.1 он пюяохяюм.",1,0,"ю-бOирх  B-мюгюд",'e',0
+.DB "2.1 пюяохяюмхе",1,0,"ю-бOирх  B-мюгюд",'e',0
 _labelMenu21In:
 .DB "бпелъ 00:00",1,8,"A-як B-X",'e'
 _labelMenu21In2:
 .DB "обявояб  я-V D-X",1,7,"A-нй B-бу",'e'
 _labelMenu22:
-.DB "2.2 он рело-пе",1,0,"ю-бOирх  B-мюгюд",'e',0
+.DB "2.2 бпелъ пюанрш",1,0,"ю-бOирх  B-мюгюд",'e',0
 _labelMenu22In:
-.DB "бйк -15я",1,0,"бшйк 40я A-V B-X",'e',0
-_labelMenu23:
-.DB "2.3 он бп.пюанрш",1,0,"ю-бOирх  B-мюгюд",'e',0
-_labelMenu23In:
 .DB "пюанрюрэ 10лхмср",1,9,"A-V B-X",'e'
+_labelMenu23:
+.DB "2.3 релоепюрспю",1,0,"ю-бOирх  B-мюгюд",'e'
+_labelMenu23In:
+.DB "бйк -15я",1,0,"бшйк 40я A-V B-X",'e',0
 _labelMenu24:
 .DB "2.4 дно. ножхх",1,0,"ю-бOирх  B-мюгюд",'e',0
 _labelMenu24In:

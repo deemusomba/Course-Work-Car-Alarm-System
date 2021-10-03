@@ -1,4 +1,3 @@
-											
 updatingDisplay:	
 	LDI R17,(1<<0)
 	RCALL CMD_WR;
@@ -111,141 +110,9 @@ modeMainDayOfWeekOverflow:
 	inc r31
 
 modeMainContinue:
-
-	call DATA_WR_from_Z
-
-	ret
-											
-modeSettings:
-	mov acc, menuModes
-	andi acc, 0x0f
-	cpi acc, 0
-	brne modeSettingsSubsLabels
-
-	ldi acc, LOW(_labelMenu1<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu1<<1)
-	mov ZH, acc
 	call DATA_WR_from_Z
 	ret
 
-modeSettingsSubsLabels:
-	ldi ZH, high(modeSettingsSubsLabelsSwitchTable)
-	ldi ZL, low(modeSettingsSubsLabelsSwitchTable)
-	dec acc
-	ldi acc2, 3
-	mul acc, acc2
-	add r30, r0
-	brcs modeSettingsSubsLabelsSwitchOverflow
-
-modeSettingsSubsLabelsSwitchContinue:
-	ijmp
-modeSettingsSubsLabelsSwitchOverflow:
-	inc r31
-	jmp modeSettingsSubsLabelsSwitchContinue
-
-modeSettingsSubsLabelsSwitchTable:
-	call modeSettingsSetTimeLabel
-	ret
-	call modeSettingsSetTankVolumeLabel
-	ret
-	call modeSettingsSetAvgSpendingLabel
-	ret
-
-modeSettingsSetTimeLabel:			
-	ldi acc, LOW(_labelMenu11<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu11<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-modeSettingsSetTankVolumeLabel:		
-	ldi acc, LOW(_labelMenu12<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu12<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-modeSettingsSetAvgSpendingLabel:
-	ldi acc, LOW(_labelMenu13<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu13<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-										
-modeAutoHeatingSettings:
-	mov acc, menuModes
-	andi acc, 0x0f
-	cpi acc, 0
-	brne modeAutoHeatingSettingsSubsLabels
-
-	ldi acc, LOW(_labelMenu2<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu2<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-modeAutoHeatingSettingsSubsLabels:
-	ldi ZH, high(modeAutoHeatingSettingsSubsLabelsSwitchTable)
-	ldi ZL, low(modeAutoHeatingSettingsSubsLabelsSwitchTable)
-	dec acc
-	ldi acc2, 3
-	mul acc, acc2
-	add r30, r0
-	brcs modeAutoHeatingSettingsSubsLabelsSwitchOverflow
-
-modeAutoHeatingSettingsSubsLabelsSwitchContinue:
-	ijmp
-modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
-	inc r31
-	jmp modeAutoHeatingSettingsSubsLabelsSwitchContinue
-
-modeAutoHeatingSettingsSubsLabelsSwitchTable:
-	call modeAutoHeatingSettingsSetScheduleLabel
-	ret
-	call modeAutoHeatingSettingsSetTempControlLabel
-	ret
-	call modeAutoHeatingSettingsSetWorkingTimeLabel
-	ret
-	call modeAutoHeatingSettingsSetOtherSettingsLabel
-	ret
-
-modeAutoHeatingSettingsSetScheduleLabel:		
-	ldi acc, LOW(_labelMenu21<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu21<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-modeAutoHeatingSettingsSetTempControlLabel:		
-	ldi acc, LOW(_labelMenu22<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu22<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-
-modeAutoHeatingSettingsSetWorkingTimeLabel:	
-	ldi acc, LOW(_labelMenu23<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu23<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-modeAutoHeatingSettingsSetOtherSettingsLabel:
-	ldi acc, LOW(_labelMenu24<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu24<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-		
 displayEnteringMenuMenuSwitchCalling: call displayEnteringMenuMenuSwitch
 	ret
 displayEnteringMenuMenuSwitch:	
@@ -305,76 +172,11 @@ displayEnteringMenu1SwitchOverflow:
 displayEnteringMenu1SwitchTable:
 	call modeSettingsSetTime
 	ret
-	call modeSettingsSetTankVolume
+	call modeSettingsSetOptions
 	ret
 	call modeSettingsSetAvgSpending
 	ret
-											
-modeSettingsSetTime:
-	ldi acc, LOW(_labelMenu11In<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu11In<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
 
-	LDI		R17,(1<<7)|(6+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc2, RTT_10H
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	lds acc2, RTT_1H
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	LDI		R17,(1<<7)|(9+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc2, RTT_10M
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	lds acc2, RTT_1M
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	LDI		R17,(1<<7)|(12+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc2, RTT_10S
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	lds acc2, RTT_1S
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	LDI		R17,0b00000010; 
-	RCALL	CMD_WR
-
-	LDI		R17,0b00001111; 
-	RCALL	CMD_WR
-	
-	ldi acc, 6
-	RCALL shiftCursorRight
-
-	ldi acc, 0x00
-	STS cursorCoords, acc
-
-	ret
-											
-modeSettingsSetTankVolume:
-	ret
-											
-modeSettingsSetAvgSpending:
-	ret
 
 displayEnteringMenu2Switch:
 	mov acc, menuModes
@@ -403,74 +205,6 @@ displayEnteringMenu2SwitchTable:
 	call modeAutoHeatingSettingsSetWorkingTime
 	ret
 	call modeAutoHeatingSettingsSetOtherSettings
-	ret
-
-modeAutoHeatingSettingsSetSchedule:
-	ldi acc, LOW(_labelMenu21In<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu21In<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-
-	LDI		R17,(1<<7)|(6+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc2, AutoHeatingTimeSchedule_10h
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	lds acc2, AutoHeatingTimeSchedule_1h
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	LDI		R17,(1<<7)|(9+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc2, AutoHeatingTimeSchedule_10m
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	lds acc2, AutoHeatingTimeSchedule_1m
-	ldi acc, 0x30
-	adc acc2, acc
-	RCALL DATA_WR
-
-	LDI		R17,0b00000010; 
-	RCALL	CMD_WR
-
-	LDI		R17,0b00001111; 
-	RCALL	CMD_WR
-	
-	ldi acc, 6
-	RCALL shiftCursorRight
-
-	ldi acc, 0x00
-	STS cursorCoords, acc
-
-	ret
-modeAutoHeatingSettingsSetTempControl:
-	ldi acc, LOW(_labelMenu22In<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu22In<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-modeAutoHeatingSettingsSetWorkingTime:
-	ldi acc, LOW(_labelMenu23In<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu23In<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
-	ret
-modeAutoHeatingSettingsSetOtherSettings:
-	ldi acc, LOW(_labelMenu24In<<1)
-	mov ZL, acc
-	ldi acc, HIGH(_labelMenu24In<<1)
-	mov ZH, acc
-	call DATA_WR_from_Z
 	ret
 
 
