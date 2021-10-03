@@ -174,9 +174,8 @@ displayEnteringMenu1SwitchTable:
 	ret
 	call modeSettingsSetOptions
 	ret
-	call modeSettingsSetAvgSpending
-	ret
-
+	;call modeSettingsSetAvgSpending
+	;ret
 
 displayEnteringMenu2Switch:
 	mov acc, menuModes
@@ -200,9 +199,9 @@ displayEnteringMenu2SwitchOverflow:
 displayEnteringMenu2SwitchTable:
 	call modeAutoHeatingSettingsSetSchedule
 	ret
-	call modeAutoHeatingSettingsSetTempControl
-	ret
 	call modeAutoHeatingSettingsSetWorkingTime
+	ret
+	call modeAutoHeatingSettingsSetTempControl
 	ret
 	call modeAutoHeatingSettingsSetOtherSettings
 	ret

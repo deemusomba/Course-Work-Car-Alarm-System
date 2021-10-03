@@ -1,4 +1,4 @@
-					
+;=========================================2. Автоподогрев=========================================					
 modeAutoHeatingSettings:
 	mov acc, menuModes
 	andi acc, 0x0f
@@ -67,7 +67,7 @@ modeAutoHeatingSettingsSetOtherSettingsLabel:
 	mov ZH, acc
 	call DATA_WR_from_Z
 	ret
-;подменю
+;=========================================2.х Автоподогрев=========================================
 modeAutoHeatingSettingsSetSchedule:
 	ldi acc, LOW(_labelMenu21In<<1)
 	mov ZL, acc
@@ -135,3 +135,230 @@ modeAutoHeatingSettingsSetOtherSettings:
 	mov ZH, acc
 	call DATA_WR_from_Z
 	ret
+
+;=========================================Ввод в "Автопогрев"=========================================
+
+enteringInfoAutoHeatingScheduleCursorPosSwitch:
+	;занести значение клавиши в буфер взависимости от курсора
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brge enteringInfoAutoHeatingScheduleKeysLettersCalling 
+	
+	call enteringInfoWriteInKeyboardBuffer	
+
+	;в зависимости от положения курсора надо сдвинуть курсор
+
+	lds acc, cursorCoords
+	cpi acc, 4
+	brge enteringInfoAutoHeatingScheduleError
+	ldi ZH, high(enteringInfoAutoHeatingScheduleCursorPosSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingScheduleCursorPosSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchContinue:
+	ijmp
+
+enteringInfoAutoHeatingScheduleError:
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersCalling: call enteringInfoAutoHeatingScheduleKeysLetters
+	ret
+enteringInfoAutoHeatingScheduleDaysInit:
+	LDI		R17,0b00000010; вернуть курсор в начальное положение
+	RCALL	CMD_WR
+
+	ldi acc, LOW(_labelMenu21In2<<1)
+	mov ZL, acc
+	ldi acc, HIGH(_labelMenu21In2<<1)
+	mov ZH, acc
+	call DATA_WR_from_Z	
+		
+	LDI		R17,(1<<7)|(0+0x40*1)
+	RCALL	CMD_WR
+
+	ldi acc, 7
+	;push acc
+	LDS acc2, AutoHeatingTimeSchedule_DayOfWeek
+	lsl acc2
+	push acc2
+enteringInfoAutoHeatingScheduleDaysInitLoop:
+	pop acc2
+	lsl acc2
+	push acc2
+	brcs enteringInfoAutoHeatingScheduleDaysInitV
+	
+	ldi acc2, 0x58; X
+	jmp enteringInfoAutoHeatingScheduleDaysInitContinue
+enteringInfoAutoHeatingScheduleDaysInitV:
+	ldi acc2, 0x56; V
+enteringInfoAutoHeatingScheduleDaysInitContinue:
+	push acc
+	RCALL DATA_WR
+	pop acc
+	dec acc
+	cpi acc, 0
+	brne enteringInfoAutoHeatingScheduleDaysInitLoop
+	
+	pop acc2
+	RCALL shiftCursorSecondRow
+	ldi acc, 0
+	STS keyboardInputBuffer+4, acc
+
+	ldi acc, 4
+	STS cursorCoords, acc
+	ret
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingScheduleCursorPosSwitchContinue
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchTable:
+	call enteringInfoAutoHeatingScheduleCursorPos0
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos1
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos2
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos3
+	ret
+
+enteringInfoAutoHeatingScheduleCursorPos0:
+	jmp enteringInfoSettingsTimeCursorPos0
+
+enteringInfoAutoHeatingScheduleCursorPos1:
+	jmp enteringInfoSettingsTimeCursorPos1
+
+enteringInfoAutoHeatingScheduleCursorPos2:
+	jmp enteringInfoSettingsTimeCursorPos2
+
+enteringInfoAutoHeatingScheduleCursorPos3:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoAutoHeatingScheduleDaysInit
+
+enteringInfoAutoHeatingScheduleKeysLetters:
+	lds acc, pressedKey
+	cpi acc, 0x0E
+	brge enteringInfoSettingsTimeError3
+
+	subi acc, 0x0A
+	ldi ZH, high(enteringInfoAutoHeatingScheduleKeysLettersSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingScheduleKeysLettersSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingScheduleKeysLettersSwitchOverflow
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchContinue:
+	ijmp
+
+enteringInfoSettingsTimeError3:
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchOverflow:
+	inc r31
+	jmp enteringInfoSettingsTimeKeysLettersSwitchContinue
+
+enteringInfoAutoHeatingScheduleKeysLettersSwitchTable:
+	call enteringInfoAutoHeatingScheduleKeysLettersA
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersB
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersC
+	ret
+	call enteringInfoAutoHeatingScheduleKeysLettersD
+	ret
+
+enteringInfoAutoHeatingScheduleKeysLettersA:
+
+	lds acc, cursorCoords
+	cpi acc, 4
+	brlo enteringInfoAutoHeatingScheduleDaysInitCalling
+	;TODO: если первое подменю, то перейти на второе, иначе вот то что снизу
+
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA1
+	STS AutoHeatingTimeSchedule_10h, acc
+enteringInfoAutoHeatingScheduleKeysLettersA1:
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA2
+	STS AutoHeatingTimeSchedule_1h, acc
+enteringInfoAutoHeatingScheduleKeysLettersA2:
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA3
+	STS AutoHeatingTimeSchedule_10m, acc
+enteringInfoAutoHeatingScheduleKeysLettersA3:
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA4
+	STS AutoHeatingTimeSchedule_1m	, acc
+enteringInfoAutoHeatingScheduleKeysLettersA4:
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingScheduleKeysLettersA5
+	STS AutoHeatingTimeSchedule_DayOfWeek, acc
+enteringInfoAutoHeatingScheduleKeysLettersA5:
+	call enteringInfoClearKeyInputBuffer;чистить буфер
+
+	jmp enteringInfoAutoHeatingScheduleKeysLettersB
+
+enteringInfoAutoHeatingScheduleDaysInitCalling:
+	jmp enteringInfoAutoHeatingScheduleDaysInit
+
+enteringInfoAutoHeatingScheduleKeysLettersB:
+	jmp enteringInfoSettingsTimeKeysLettersB
+
+enteringInfoAutoHeatingScheduleKeysLettersC:
+	ldi acc2, 0x56; V
+	RCALL DATA_WR
+	
+	call enteringInfoAutoHeatingScheduleWriteData
+	
+	lds acc, cursorCoords
+	inc acc
+	STS cursorCoords, acc
+	ret	
+enteringInfoAutoHeatingScheduleKeysLettersD:
+	ldi acc2, 0x58; X
+	RCALL DATA_WR
+	
+	lds acc, cursorCoords
+	inc acc
+	STS cursorCoords, acc
+	ret	
+
+enteringInfoAutoHeatingScheduleKeyBindingError:
+	ret
+
+enteringInfoAutoHeatingScheduleWriteData:
+	ldi acc2, 0b01000000
+	lds acc, cursorCoords
+	subi acc, 4
+	push acc
+enteringInfoAutoHeatingScheduleWriteDataLoop:
+	
+	pop acc
+	cpi acc, 0
+	breq enteringInfoAutoHeatingScheduleWriteDataContinue
+	dec acc
+	push acc
+
+	lsr acc2
+	jmp enteringInfoAutoHeatingScheduleWriteDataLoop
+enteringInfoAutoHeatingScheduleWriteDataContinue:
+	LDS acc, keyboardInputBuffer+4
+	OR acc, acc2
+	STS keyboardInputBuffer+4, acc
+	ret
+

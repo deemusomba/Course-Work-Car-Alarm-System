@@ -35,14 +35,14 @@ keyBindingsEnterMode: 			;ввод пункта меню
 	lsl acc
 	lsl acc
 	add menuModes, acc	;записали режим
-	jmp keyBindingsRet
+	ret
 keyBindingsEnterSubMode:		;ввод пункта подменю
 	mov acc, r0
 	andi menuModes, 0xF0
 	add menuModes, acc			;ввели пункт подменю
-	jmp keyBindingsRet
+	ret
 	
-keyBindingsLetters:
+keyBindingsLetters: ;нажата буква
 	mov acc, r0
 	subi acc, 10; --10
 	ldi ZH, high(keyBindingsLetterCallingTable)
@@ -88,14 +88,14 @@ keyBindingsLetterA:
 	;если выбран подрежим, то ввод в режимах
 	sbr programFlags, 8;	установка флага перехода в подрежим
 	sbr programFlags, 4; установка флага "обновить дисплей"
-	jmp keyBindingsRet
+	ret
 keyBindingsRet2: ret
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
 	mov acc, menuModes
 	andi acc, 0xF0
-	ori acc, 0x01
+	inc acc
 	mov menuModes, acc
-	jmp keyBindingsRet2
+	ret
 
 keyBindingsLetterB:
 	mov acc, menuModes
@@ -109,11 +109,11 @@ keyBindingsLetterB:
 	;значит все выбрано
 		
 	andi menuModes, 0xf0	;иначе выходим из выбора подпунктов обратно к выбору пунктов меню	
-	jmp keyBindingsRet2
+	ret
 
 keyBindingsBackFromMode:
 	ldi menuModes, 0x00		;назад в главное меню
-	jmp keyBindingsRet2
+	ret
 
 keyBindingsLetterC:
 	mov acc, menuModes
@@ -128,14 +128,12 @@ keyBindingsLetterCDecMode:
 	cpi acc, 0
 	brlo keyBindingsRet2
 
-	mov acc, menuModes
-	subi acc, 0x10
-	mov menuModes, acc
-	jmp keyBindingsRet2
+	subi menuModes, 0x10
+	ret
 
 keyBindingsLetterCDecSubMode:
 	dec menuModes
-	jmp keyBindingsRet2
+	ret
 
 
 keyBindingsLetterD:
@@ -155,20 +153,14 @@ keyBindingsLetterDIncMode:
 	ldi acc2, 0x10
 	add acc, acc2
 	mov menuModes, acc
-	jmp keyBindingsRet3
+	ret
 
 keyBindingsLetterDIncSubMode:
 	inc menuModes
+	ret
 
-	jmp keyBindingsRet3
-
-keyBindingsBackToMainMenu:
-	ldi acc, 0x00
-	mov menuModes, acc
-	jmp keyBindingsRet3
 keyBindingsLetterE:	ret
 keyBindingsLetterF:	ret
-keyBindingsRet3: ret
 keyBindingsEnteringInModes:
 	sbr programFlags, 16
 	STS pressedKey, r0
