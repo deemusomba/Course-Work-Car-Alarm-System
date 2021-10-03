@@ -76,6 +76,7 @@ KeyTable:
 .include "modeSettings.asm"
 .include "modeAutoHeatingSettings.asm"
 start:
+;=========================================Инициализация=========================================
 	ldi acc,low(ramend)
 	out spl,acc
 	ldi acc,high(ramend)
@@ -165,7 +166,7 @@ startkeyboardInputBufferInit:
 	out SPCR, acc
 
 	sei; разрешение прерываний   
-
+;=========================================/Инициализация=========================================
 ;для отладочных вещей
 backdoor:
 	
@@ -176,7 +177,7 @@ backdoor:
 bkdr:
 	jmp backgroundLoop
 
-;-----главный цикл обработки флагов-----;
+;=========================================Фоновый цикл=========================================
 backgroundLoop:
 	jmp carScanning;сканирование датчиков дверей и тп
 	
@@ -204,15 +205,13 @@ backLoopAfterRTTFlagsScan:
 	call autoHeatingMain
 	jmp backgroundLoop
 
-;-----конец обработки флагов-----;
+;=========================================/Фоновый цикл=========================================
 
 updateDisplay:
 	cbr programFlags,4; очистка флага "обновить дисплей"	
 	call updatingDisplay
 	ret
-;-----КЛАВИАТУРА-----;
-
-;входная точка перебора строк клавиатуры
+;=========================================Клавиатура=========================================
 keyboardScanning:
 	;первоначальная инициализация
 	cbr RTTFlags,2
@@ -294,8 +293,8 @@ keyFound:
 
 	jmp backgroundLoop
 	
-;-----КЛАВИАТУРА-----;
-;--------ЧАСЫ--------;
+;=========================================/Клавиатура=========================================
+;=========================================Часы=========================================
 RTT_1msInt:
 	sts AccReserve, acc
 	ldi acc, 0x00
@@ -447,8 +446,7 @@ RTT_24h_inc:
 	STS RTT_7Days, acc
 	call RTT_checkSchedule
 	jmp backLoopAfterRTTFlagsScan
-;--------ЧАСЫ--------;
-
+;=========================================/Часы=========================================
 RTT_checkSchedule:
 	lds acc, RTT_7Days
 	lds acc2, AutoHeatingTimeSchedule_DayOfWeek
@@ -484,7 +482,7 @@ RTT_checkScheduleLoopBreak:
 	sbr functionsFlags, 2
 
 RTT_checkScheduleRet:	ret
-
+;=========================================Сигнализация=========================================
 carScanning:
 	jmp backLoopAfterCarScan
 updateSevenSigmDisplay: ;в acc (r16) находится то, что нужно отобразить
@@ -495,12 +493,11 @@ updateSevenSigmDisplayLoop:
 	sbi portB, 0
 	cbi portB, 0
 	ret
-
-	;часть про вывод через последовательный вывод, но это не понадобится скорее всего
+;=========================================/Сигнализация=========================================
 
 
 displayRecodingTable:
-.DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0x75,0xAB,0xAC,0xAC,0xAD,0xAE,0x62, 0xAF,0xB0,0xB1
+.DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0xE1,0xAB,0xAC,0xE2,0xAD,0xAE,0x62,0xAF,0xB0,0xB1
 
 _labelTest:
 .DB 'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н',1,0,'О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я','e'
