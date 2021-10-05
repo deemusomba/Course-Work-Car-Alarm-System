@@ -80,7 +80,7 @@ keyBindingsLetterA:
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0
-	breq keyBindingsRet2
+	breq keyBindingsLetterAEnterFirst;//TODO: добавить в алгоритмы
 	;если выбран режим, то выбрать первый подрежим
 	mov acc, menuModes
 	andi acc, 0x0F
@@ -91,6 +91,9 @@ keyBindingsLetterA:
 	sbr programFlags, 4; установка флага "обновить дисплей"
 	ret
 keyBindingsRet2: ret
+keyBindingsLetterAEnterFirst:
+	ldi menuModes, 0x10//TODO: добавить в алгоритмы
+	ret//TODO: добавить в алгоритмы
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
 	mov acc, menuModes
 	andi acc, 0xF0
