@@ -102,8 +102,6 @@ symToHex:;sym in acc (r16)
 			cpi 	acc, 192
 			brlo 	brOther; если меньше кода буквы A, то код введенного символа равен коду дл€ вывода на дисплей				
 			
-			
-
 			subi 	acc, 'ј'
 			;subi acc, -1
 
@@ -142,7 +140,7 @@ shiftCursorRight:;кол-во раз в r16
 
 			ret
 
-shiftCursorLeft:;кол-во раз в r17
+shiftCursorLeft:;кол-во раз в r16
 			push r16
 			LDI		R17,(1<<4); сдвинуть курсор влево
 			RCALL	CMD_WR

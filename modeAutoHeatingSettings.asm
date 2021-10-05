@@ -16,6 +16,8 @@ modeAutoHeatingSettings:
 modeAutoHeatingSettingsSubsLabels:
 	ldi ZH, high(modeAutoHeatingSettingsSubsLabelsSwitchTable)
 	ldi ZL, low(modeAutoHeatingSettingsSubsLabelsSwitchTable)
+	cpi acc, 5;//TODO: добавить в алгоритмы
+	brge modeAutoHeatingSettingsSubsLabelsSwitchFix//TODO: добавить в алгоритмы
 	dec acc
 	ldi acc2, 3
 	mul acc, acc2
@@ -24,6 +26,12 @@ modeAutoHeatingSettingsSubsLabels:
 
 modeAutoHeatingSettingsSubsLabelsSwitchContinue:
 	ijmp
+
+modeAutoHeatingSettingsSubsLabelsSwitchFix:
+	call keyBindingsLetterCDecSubMode//TODO: добавить в алгоритмы
+	sbr programFlags, 4
+	jmp modeSettingsSubsLabelsSwitchContinue//TODO: добавить в алгоритмы
+
 modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
 	inc r31
 	jmp modeAutoHeatingSettingsSubsLabelsSwitchContinue
@@ -162,8 +170,22 @@ enteringInfoAutoHeatingScheduleCursorPosSwitch:
 enteringInfoAutoHeatingScheduleCursorPosSwitchContinue:
 	ijmp
 
-enteringInfoAutoHeatingScheduleError:
+enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingScheduleCursorPosSwitchContinue
+
+enteringInfoAutoHeatingScheduleCursorPosSwitchTable:
+	call enteringInfoAutoHeatingScheduleCursorPos0
 	ret
+	call enteringInfoAutoHeatingScheduleCursorPos1
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos2
+	ret
+	call enteringInfoAutoHeatingScheduleCursorPos3
+	ret
+
+enteringInfoAutoHeatingScheduleError:
+	jmp enteringInfoSettingsTimeError
 
 enteringInfoAutoHeatingScheduleKeysLettersCalling: call enteringInfoAutoHeatingScheduleKeysLetters
 	ret
@@ -181,7 +203,6 @@ enteringInfoAutoHeatingScheduleDaysInit:
 	RCALL	CMD_WR
 
 	ldi acc, 7
-	;push acc
 	LDS acc2, AutoHeatingTimeSchedule_DayOfWeek
 	lsl acc2
 	push acc2
@@ -205,25 +226,11 @@ enteringInfoAutoHeatingScheduleDaysInitContinue:
 	
 	pop acc2
 	RCALL shiftCursorSecondRow
-	ldi acc, 0
+	ldi acc, 0x0
 	STS keyboardInputBuffer+4, acc
 
 	ldi acc, 4
 	STS cursorCoords, acc
-	ret
-
-enteringInfoAutoHeatingScheduleCursorPosSwitchOverflow:
-	inc r31
-	jmp enteringInfoAutoHeatingScheduleCursorPosSwitchContinue
-
-enteringInfoAutoHeatingScheduleCursorPosSwitchTable:
-	call enteringInfoAutoHeatingScheduleCursorPos0
-	ret
-	call enteringInfoAutoHeatingScheduleCursorPos1
-	ret
-	call enteringInfoAutoHeatingScheduleCursorPos2
-	ret
-	call enteringInfoAutoHeatingScheduleCursorPos3
 	ret
 
 enteringInfoAutoHeatingScheduleCursorPos0:

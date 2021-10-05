@@ -127,15 +127,16 @@ keyBindingsLetterCDecMode:
 	mov acc, menuModes
 	andi acc, 0xf0
 	cpi acc, 0
-	brlo keyBindingsRet2
-
+	breq keyBindingsLetterCDecModeLast;//TODO: добавить в алгоритмы
 	subi menuModes, 0x10
 	ret
 
 keyBindingsLetterCDecSubMode:
 	dec menuModes
 	ret
-
+keyBindingsLetterCDecModeLast://TODO: добавить в алгоритмы
+	ldi menuModes, 0x20//TODO: добавить в алгоритмы
+	ret//TODO: добавить в алгоритмы
 
 keyBindingsLetterD:
 	mov acc, menuModes
@@ -147,7 +148,7 @@ keyBindingsLetterD:
 keyBindingsLetterDIncMode:
 	mov acc, menuModes
 	andi acc, 0xf0
-	cpi acc, 0x50
+	cpi acc, 0x20
 	brge keyBindingsBackFromMode
 
 	mov acc, menuModes

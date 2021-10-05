@@ -64,7 +64,7 @@ enteringInfoMenu1SwitchOverflow:
 enteringInfoMenu1SwitchTable:
 	call enteringInfoSettingsTimeCursorPosSwitch
 	ret
-	;call modeSettingsSetTankVolume
+	;call enteringInfoSettingsOptionsCursorPosSwitch
 	ret
 	;call modeSettingsSetAvgSpending
 	ret
@@ -120,9 +120,11 @@ enteringInfoMenu2SwitchOverflow:
 enteringInfoMenu2SwitchTable:
 	call enteringInfoAutoHeatingScheduleCursorPosSwitch
 	ret
-	;call mode2
+	;call enteringInfoAutoHeatingWorkingTimeCursorPosSwitch
 	ret
-	;call mode3
+	;call enteringInfoAutoHeatingTempControlCursorPosSwitch
+	ret
+	;call enteringInfoAutoHeatingOtherOptionsCursorPosSwitch
 	ret
 
 ;=========================================/Ввод информации=========================================

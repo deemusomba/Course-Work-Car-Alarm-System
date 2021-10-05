@@ -281,7 +281,7 @@ keyFound:
 	;кнопка найдена
 	lpm
 	cbr programFlags, 2
-
+	
 	call keyBindings	
 
 	sbrs programFlags, 3; если в "режиме", то по умолчанию не обновлять дисплей

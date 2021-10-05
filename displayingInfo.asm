@@ -6,15 +6,15 @@ updatingDisplay:
 		
 	sbrc programFlags, 3
 	jmp displayEnteringMenuMenuSwitchCalling
-
+	
+updateDisplayMenuSwitch:
 	mov acc, menuModes
 	andi acc, 0xf0
 	lsr acc
 	lsr acc
 	lsr acc
 	lsr acc
-	
-updateDisplayMenuSwitch:
+
 	ldi ZH, high(updateDisplayMenuSwitchTable)
 	ldi ZL, low(updateDisplayMenuSwitchTable)
 	ldi acc2, 3

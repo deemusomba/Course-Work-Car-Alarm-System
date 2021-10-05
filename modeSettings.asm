@@ -16,6 +16,8 @@ modeSettings:
 modeSettingsSubsLabels:
 	ldi ZH, high(modeSettingsSubsLabelsSwitchTable)
 	ldi ZL, low(modeSettingsSubsLabelsSwitchTable)
+	cpi acc, 3;//TODO: добавить в алгоритмы
+	brge modeSettingsSubsLabelsSwitchFix//TODO: добавить в алгоритмы
 	dec acc
 	ldi acc2, 3
 	mul acc, acc2
@@ -24,6 +26,12 @@ modeSettingsSubsLabels:
 
 modeSettingsSubsLabelsSwitchContinue:
 	ijmp
+
+modeSettingsSubsLabelsSwitchFix://TODO: добавить в алгоритмы
+	call keyBindingsLetterCDecSubMode//TODO: добавить в алгоритмы
+	sbr programFlags, 4
+	jmp modeSettingsSubsLabelsSwitchContinue//TODO: добавить в алгоритмы
+
 modeSettingsSubsLabelsSwitchOverflow:
 	inc r31
 	jmp modeSettingsSubsLabelsSwitchContinue
@@ -31,7 +39,7 @@ modeSettingsSubsLabelsSwitchOverflow:
 modeSettingsSubsLabelsSwitchTable:
 	call modeSettingsSetTimeLabel
 	ret
-	call modeSettingsSetTankVolumeLabel
+	call modeSettingsSetOtherOptionsLabel
 	ret
 	call modeSettingsSetAvgSpendingLabel
 	ret
@@ -44,7 +52,7 @@ modeSettingsSetTimeLabel:
 	call DATA_WR_from_Z
 	ret
 
-modeSettingsSetTankVolumeLabel:		
+modeSettingsSetOtherOptionsLabel:		
 	ldi acc, LOW(_labelMenu12<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu12<<1)
