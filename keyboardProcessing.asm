@@ -27,7 +27,7 @@ keyBindingsNumbers:
 
 keyBindingsEnterMode: 			;ввод пункта меню
 	mov acc, r0
-	cpi acc, 0x06; количество режимов, но +1
+	cpi acc, 0x03; количество режимов, но +1//TODO: добавить в алгоритмы
 	brge keyBindingsRet; нет такого режима, уходим
 	mov acc, r0
 	andi menuModes, 0x0F

@@ -39,9 +39,9 @@ modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
 modeAutoHeatingSettingsSubsLabelsSwitchTable:
 	call modeAutoHeatingSettingsSetScheduleLabel
 	ret
-	call modeAutoHeatingSettingsSetTempControlLabel
-	ret
 	call modeAutoHeatingSettingsSetWorkingTimeLabel
+	ret
+	call modeAutoHeatingSettingsSetTempControlLabel
 	ret
 	call modeAutoHeatingSettingsSetOtherSettingsLabel
 	ret
@@ -54,7 +54,7 @@ modeAutoHeatingSettingsSetScheduleLabel:
 	call DATA_WR_from_Z
 	ret
 
-modeAutoHeatingSettingsSetTempControlLabel:		
+modeAutoHeatingSettingsSetWorkingTimeLabel:		
 	ldi acc, LOW(_labelMenu22<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu22<<1)
@@ -62,7 +62,7 @@ modeAutoHeatingSettingsSetTempControlLabel:
 	call DATA_WR_from_Z
 	ret
 
-modeAutoHeatingSettingsSetWorkingTimeLabel:	
+modeAutoHeatingSettingsSetTempControlLabel:	
 	ldi acc, LOW(_labelMenu23<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu23<<1)
@@ -123,14 +123,41 @@ modeAutoHeatingSettingsSetSchedule:
 	STS cursorCoords, acc
 
 	ret
-modeAutoHeatingSettingsSetTempControl:
+
+modeAutoHeatingSettingsSetWorkingTime:
 	ldi acc, LOW(_labelMenu22In<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu22In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
+
+	LDI		R17,(1<<7)|(9+0x40*0)
+	RCALL	CMD_WR
+
+	lds acc2, AutoHeatingWorkingTime_10m
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	lds acc2, AutoHeatingWorkingTime_1m
+	ldi acc, 0x30
+	adc acc2, acc
+	RCALL DATA_WR
+
+	LDI		R17,0b00000010; 
+	RCALL	CMD_WR
+
+	LDI		R17,0b00001111; 
+	RCALL	CMD_WR
+	
+	ldi acc, 9
+	RCALL shiftCursorRight
+
+	ldi acc, 0x00
+	STS cursorCoords, acc
+
 	ret
-modeAutoHeatingSettingsSetWorkingTime:
+modeAutoHeatingSettingsSetTempControl:
 	ldi acc, LOW(_labelMenu23In<<1)
 	mov ZL, acc
 	ldi acc, HIGH(_labelMenu23In<<1)
@@ -146,7 +173,7 @@ modeAutoHeatingSettingsSetOtherSettings:
 	ret
 
 ;=========================================Ввод в "Автопогрев"=========================================
-
+;=========================================Ввод в "Расписание"=========================================
 enteringInfoAutoHeatingScheduleCursorPosSwitch:
 	;занести значение клавиши в буфер взависимости от курсора
 	lds acc, pressedKey
@@ -284,11 +311,9 @@ enteringInfoAutoHeatingScheduleKeysLettersSwitchTable:
 	ret
 
 enteringInfoAutoHeatingScheduleKeysLettersA:
-
 	lds acc, cursorCoords
 	cpi acc, 4
 	brlo enteringInfoAutoHeatingScheduleDaysInitCalling
-	;TODO: если первое подменю, то перейти на второе, иначе вот то что снизу
 
 	LDI YL, low(keyboardInputBuffer)
 	LDI YH, high(keyboardInputBuffer)
@@ -369,4 +394,85 @@ enteringInfoAutoHeatingScheduleWriteDataContinue:
 	OR acc, acc2
 	STS keyboardInputBuffer+4, acc
 	ret
+;=========================================/Ввод в "Расписание"=========================================
+enteringInfoAutoHeatingWorkingTimeCursorPosSwitch:
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brge enteringInfoAutoHeatingWorkingTimeKeysLettersCalling 
+	
+	call enteringInfoWriteInKeyboardBuffer;занести значение клавиши в буфер взависимости от курсора
 
+	;в зависимости от положения курсора надо сдвинуть курсор
+
+	lds acc, cursorCoords
+	cpi acc, 2
+	brge enteringInfoAutoHeatingWorkingTimeError
+	ldi ZH, high(enteringInfoAutoHeatingWorkingTimeCursorPosTable)
+	ldi ZL, low(enteringInfoAutoHeatingWorkingTimeCursorPosTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingWorkingTimeCursorPosOverflow
+
+enteringInfoAutoHeatingWorkingTimeCursorPosContinue:
+	ijmp
+
+enteringInfoAutoHeatingWorkingTimeCursorPosOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingWorkingTimeCursorPosContinue
+
+enteringInfoAutoHeatingWorkingTimeCursorPosTable:
+	call enteringInfoAutoHeatingWorkingTimeCursorPos0
+	ret
+	call enteringInfoAutoHeatingWorkingTimeCursorPos1
+	ret
+enteringInfoAutoHeatingWorkingTimeKeysLettersCalling:
+	call enteringInfoAutoHeatingWorkingTimeKeysLetters
+	ret
+
+enteringInfoAutoHeatingWorkingTimeError:
+	jmp enteringInfoSettingsTimeError
+	
+enteringInfoAutoHeatingWorkingTimeCursorPos0:
+	lds acc2, pressedKey
+	cpi acc2, 6
+	brge enteringInfoAutoHeatingWorkingTimeError
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
+enteringInfoAutoHeatingWorkingTimeCursorPos1:
+	lds acc2, pressedKey
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+	
+	ret
+
+enteringInfoAutoHeatingWorkingTimeKeysLetters:
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	breq enteringInfoAutoHeatingWorkingTimeKeysLettersA
+	jmp enteringInfoAutoHeatingWorkingTimeKeysLettersB
+
+enteringInfoAutoHeatingWorkingTimeKeysLettersA:
+	LDI YL, low(keyboardInputBuffer)
+	LDI YH, high(keyboardInputBuffer)
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingWorkingTimeKeysLettersA1
+	STS AutoHeatingWorkingTime_10m, acc
+enteringInfoAutoHeatingWorkingTimeKeysLettersA1:
+	LD acc, Y+
+	cpi acc, 0xff
+	breq enteringInfoAutoHeatingWorkingTimeKeysLettersA2
+	STS AutoHeatingWorkingTime_1m, acc
+enteringInfoAutoHeatingWorkingTimeKeysLettersA2:
+	call enteringInfoClearKeyInputBuffer;чистить буфер
+	jmp enteringInfoAutoHeatingWorkingTimeKeysLettersB
+
+enteringInfoAutoHeatingWorkingTimeKeysLettersB:
+	jmp enteringInfoSettingsTimeKeysLettersB
+;=========================================/Ввод в "Автопогрев"=========================================

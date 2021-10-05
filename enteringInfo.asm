@@ -120,7 +120,7 @@ enteringInfoMenu2SwitchOverflow:
 enteringInfoMenu2SwitchTable:
 	call enteringInfoAutoHeatingScheduleCursorPosSwitch
 	ret
-	;call enteringInfoAutoHeatingWorkingTimeCursorPosSwitch
+	call enteringInfoAutoHeatingWorkingTimeCursorPosSwitch
 	ret
 	;call enteringInfoAutoHeatingTempControlCursorPosSwitch
 	ret

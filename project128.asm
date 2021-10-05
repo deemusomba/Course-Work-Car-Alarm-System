@@ -30,7 +30,8 @@ AutoHeatingTimeSchedule_1h: .BYTE 1
 AutoHeatingTimeSchedule_10m: .BYTE 1
 AutoHeatingTimeSchedule_1m: .BYTE 1
 AutoHeatingTimeSchedule_DayOfWeek: .BYTE 1
-
+AutoHeatingWorkingTime_1m: .BYTE 1
+AutoHeatingWorkingTime_10m: .BYTE 1
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
 
@@ -121,7 +122,10 @@ start:
 	STS AutoHeatingTimeSchedule_1h, acc
 	STS AutoHeatingTimeSchedule_10m, acc
 	STS AutoHeatingTimeSchedule_1m, acc
-
+	STS AutoHeatingWorkingTime_1m, acc
+	ldi acc, 0x01
+	STS AutoHeatingWorkingTime_10m, acc
+	ldi acc, 0x0
 	STS KeyScanTimer, acc
 	STS KeyDebouncingTimer, acc
 
@@ -164,6 +168,9 @@ startkeyboardInputBufferInit:
 
 	ldi acc, (1<<SPE)|(1<<MSTR);|(1<<SPR0) 
 	out SPCR, acc
+	
+	ldi acc, 0xff; обнуление семисигментного индикатора
+	call updateSevenSigmDisplay
 
 	sei; разрешение прерываний   
 ;=========================================/Инициализация=========================================
@@ -534,7 +541,7 @@ _labelMenu22In:
 _labelMenu23:
 .DB "2.3 ТЕМПЕРАТУРА",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu23In:
-.DB "ВКЛ -15С",1,0,"ВЫКЛ 40С A-V B-X",'e',0
+.DB "ИСП. V  ВКЛ -15С",1,0,"ВЫКЛ 40С CVDX AO",'e',0
 _labelMenu24:
 .DB "2.4 ДОП. ОПЦИИ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
 _labelMenu24In:

@@ -211,7 +211,7 @@ enteringInfoSettingsTimeErrorContinue:
 	ret
 
 enteringInfoSettingsTimeCursorPos1:
-	LDS acc, keyboardInputBuffer
+	LDS acc, pressedKey
 	cpi acc, 2
 	breq enteringInfoSettingsTimeCursorPos1_2h
 	jmp enteringInfoSettingsTimeCursorPos1_Continue
