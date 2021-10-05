@@ -122,7 +122,7 @@ enteringInfoMenu2SwitchTable:
 	ret
 	call enteringInfoAutoHeatingWorkingTimeCursorPosSwitch
 	ret
-	;call enteringInfoAutoHeatingTempControlCursorPosSwitch
+	call enteringInfoAutoHeatingTempControlCursorPosSwitch
 	ret
 	;call enteringInfoAutoHeatingOtherOptionsCursorPosSwitch
 	ret

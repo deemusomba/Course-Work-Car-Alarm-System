@@ -395,6 +395,7 @@ enteringInfoAutoHeatingScheduleWriteDataContinue:
 	STS keyboardInputBuffer+4, acc
 	ret
 ;=========================================/Ввод в "Расписание"=========================================
+;=========================================Ввод в "Время работы"=========================================
 enteringInfoAutoHeatingWorkingTimeCursorPosSwitch:
 	lds acc, pressedKey
 	cpi acc, 0x0A
@@ -475,4 +476,96 @@ enteringInfoAutoHeatingWorkingTimeKeysLettersA2:
 
 enteringInfoAutoHeatingWorkingTimeKeysLettersB:
 	jmp enteringInfoSettingsTimeKeysLettersB
+;=========================================/Ввод в "Время работы"=========================================
+;=========================================Ввод в "Температура"=========================================
+enteringInfoAutoHeatingTempControlCursorPosSwitch:
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brge enteringInfoAutoHeatingTempControlKeysLettersCalling 
+	
+	call enteringInfoWriteInKeyboardBuffer;занести значение клавиши в буфер взависимости от курсора
+
+	;в зависимости от положения курсора надо сдвинуть курсор
+
+	lds acc, cursorCoords
+	cpi acc, 2
+	brge enteringInfoAutoHeatingTempControlError
+	ldi ZH, high(enteringInfoAutoHeatingTempControlCursorPosTable)
+	ldi ZL, low(enteringInfoAutoHeatingTempControlCursorPosTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingTempControlCursorPosOverflow
+
+enteringInfoAutoHeatingTempControlCursorPosContinue:
+	ijmp
+
+enteringInfoAutoHeatingTempControlCursorPosOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingTempControlCursorPosContinue
+
+enteringInfoAutoHeatingTempControlCursorPosTable:
+	call enteringInfoAutoHeatingTempControlCursorPos0
+	ret
+	call enteringInfoAutoHeatingTempControlCursorPos1
+	ret
+enteringInfoAutoHeatingTempControlKeysLettersCalling:
+	call enteringInfoAutoHeatingTempControlKeysLetters
+	ret
+
+enteringInfoAutoHeatingTempControlError:
+	jmp enteringInfoSettingsTimeError
+	
+enteringInfoAutoHeatingTempControlCursorPos0:
+	ret
+
+enteringInfoAutoHeatingTempControlCursorPos1:
+	ret
+
+enteringInfoAutoHeatingTempControlKeysLetters:
+	lds acc, pressedKey
+	cpi acc, 0x0E
+	brge enteringInfoAutoHeatingTempControlError1
+
+	subi acc, 0x0A
+	ldi ZH, high(enteringInfoAutoHeatingTempControlKeysLettersSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingTempControlKeysLettersSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingTempControlKeysLettersSwitchOverflow
+
+enteringInfoAutoHeatingTempControlKeysLettersSwitchContinue:
+	ijmp
+
+enteringInfoAutoHeatingTempControlError1:
+	ret
+
+enteringInfoAutoHeatingTempControlKeysLettersSwitchOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingTempControlKeysLettersSwitchContinue
+
+enteringInfoAutoHeatingTempControlKeysLettersSwitchTable:
+	call enteringInfoAutoHeatingTempControlKeysLettersA
+	ret
+	call enteringInfoAutoHeatingTempControlKeysLettersB
+	ret
+	call enteringInfoAutoHeatingTempControlKeysLettersC
+	ret
+	call enteringInfoAutoHeatingTempControlKeysLettersD
+	ret
+
+enteringInfoAutoHeatingTempControlKeysLettersA:
+	ret
+	call enteringInfoClearKeyInputBuffer;чистить буфер
+	jmp enteringInfoAutoHeatingTempControlKeysLettersB
+
+enteringInfoAutoHeatingTempControlKeysLettersB:
+	jmp enteringInfoSettingsTimeKeysLettersB
+enteringInfoAutoHeatingTempControlKeysLettersC:
+	ret
+enteringInfoAutoHeatingTempControlKeysLettersD:
+	ret
+
+;=========================================/Ввод в "Температура"=========================================
 ;=========================================/Ввод в "Автопогрев"=========================================

@@ -1,6 +1,5 @@
 .device ATmega128             
 .INCLUDE "m128def.inc"
-;.include "m103def.inc"
 
 .def scan=R18;   
 .def cpg=R19;  
