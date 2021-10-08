@@ -27,7 +27,7 @@ keyBindingsNumbers:
 
 keyBindingsEnterMode: 			;ввод пункта меню
 	mov acc, r0
-	cpi acc, 0x06; количество режимов, но +1
+	cpi acc, 0x03; количество режимов, но +1//TODO: добавить в алгоритмы
 	brge keyBindingsRet; нет такого режима, уходим
 	mov acc, r0
 	andi menuModes, 0x0F
@@ -62,11 +62,11 @@ keyBindingsLettersOverflow:
 	jmp keyBindingsLettersContinue
 
 keyBindingsLetterCallingTable:	
-keyBindingsLetterACalling: call keyBindingsLetterA
+	call keyBindingsLetterA
 	ret
-keyBindingsLetterBCalling: call keyBindingsLetterB
+	call keyBindingsLetterB
 	ret
-keyBindingsLetterCCalling: call keyBindingsLetterC
+	call keyBindingsLetterC
 	ret
 keyBindingsLetterDCalling: call keyBindingsLetterD
 	ret
@@ -80,7 +80,7 @@ keyBindingsLetterA:
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0
-	breq keyBindingsRet2
+	breq keyBindingsLetterAEnterFirst;//TODO: добавить в алгоритмы
 	;если выбран режим, то выбрать первый подрежим
 	mov acc, menuModes
 	andi acc, 0x0F
@@ -91,6 +91,9 @@ keyBindingsLetterA:
 	sbr programFlags, 4; установка флага "обновить дисплей"
 	ret
 keyBindingsRet2: ret
+keyBindingsLetterAEnterFirst:
+	ldi menuModes, 0x10//TODO: добавить в алгоритмы
+	ret//TODO: добавить в алгоритмы
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
 	mov acc, menuModes
 	andi acc, 0xF0

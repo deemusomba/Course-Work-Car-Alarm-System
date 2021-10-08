@@ -8,7 +8,7 @@
 .def menuModes=R21;старшая часть отвечает за пункты меню, младшая - за подпункты
 .def acc=R16;аккумулятор
 .def acc2=R17;вспомогательный регистр для передачи данных между блоками
-.def programFlags=R22; 0|0|carThing I dont remember|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
+.def programFlags=R22; 0|alarmSoundOn|alarmStatus|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
 .def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|autoHeatingTemp|autoHeatingSchedule|keyScan|msAdd
 .def functionsFlags=R24; 0|0|0|0|autoHeatingTime|autoHeatingTemp|autoHeatingSchedule|autoHeatingTurnOn
 
@@ -75,6 +75,7 @@ KeyTable:
 .include "autoHeating.asm"
 .include "modeSettings.asm"
 .include "modeAutoHeatingSettings.asm"
+.include "carScanning.asm"
 start:
 ;=========================================Инициализация=========================================
 	ldi acc,low(ramend)
@@ -179,7 +180,7 @@ bkdr:
 
 ;=========================================Фоновый цикл=========================================
 backgroundLoop:
-	jmp carScanning;сканирование датчиков дверей и тп
+	call carScanning;сканирование датчиков дверей и тп
 	
 backLoopAfterCarScan:
 	sbrc programFlags, 0; если 1, тогда следующую строку, иначе пропустить
@@ -482,9 +483,8 @@ RTT_checkScheduleLoopBreak:
 	sbr functionsFlags, 2
 
 RTT_checkScheduleRet:	ret
-;=========================================Сигнализация=========================================
-carScanning:
-	jmp backLoopAfterCarScan
+;=========================================Семисигментный индикатор=========================================
+
 updateSevenSigmDisplay: ;в acc (r16) находится то, что нужно отобразить
 	out SPDR, acc
 updateSevenSigmDisplayLoop:
@@ -493,7 +493,7 @@ updateSevenSigmDisplayLoop:
 	sbi portB, 0
 	cbi portB, 0
 	ret
-;=========================================/Сигнализация=========================================
+;=========================================/Семисигментный индикатор=========================================
 
 
 displayRecodingTable:
