@@ -170,6 +170,11 @@ startkeyboardInputBufferInit:
 	
 	ldi acc, 0xff; обнуление семисигментного индикатора
 	call updateSevenSigmDisplay
+	;инициализация АЦП
+	ldi acc, 0b11100101; включить АЦП, установить частоту в 125кГЦ, запуск преобразовния и перезапуска
+	out ADCSRA, acc
+	ldi acc, 0b00000000;Настройки: AREF, ADC0
+	out ADMUX, acc
 
 	sei; разрешение прерываний   
 ;=========================================/Инициализация=========================================
@@ -181,6 +186,7 @@ backdoor:
 	;brne backgroundLoop
 
 bkdr:
+	call getTemperature
 	jmp backgroundLoop
 
 ;=========================================Фоновый цикл=========================================
@@ -209,6 +215,7 @@ backLoopAfterRTTFlagsScan:
 	call enteringInfo
 	sbrc functionsFlags, 0
 	call autoHeatingMain
+	jmp bkdr
 	jmp backgroundLoop
 
 ;=========================================/Фоновый цикл=========================================
@@ -501,6 +508,40 @@ updateSevenSigmDisplayLoop:
 	ret
 ;=========================================/Сигнализация=========================================
 
+getTemperature:
+	in acc, ADCL
+	in acc2, ADCH
+	subi acc2, 1
+	subi acc, 0xDD
+	brmi getTemperatureBelowZero
+	jmp getTemperatureBelowContinue
+getTemperatureBelowZero:
+	com acc
+	push acc2
+	mov acc2, acc
+	ldi acc, 0xff
+	sub acc, acc2
+	pop acc2
+	subi acc2, 1
+	
+getTemperatureBelowContinue:
+	cpi acc2, 1
+	brge getTemperatureCarryOn
+	jmp getTemperatureCarryOnContinue
+getTemperatureCarryOn:
+	ldi acc2, 0x80
+getTemperatureCarryOnContinue:
+	lsr acc
+	or acc, acc2
+	subi acc, 40
+	brmi getTemperatureNegativeOutput
+	jmp getTemperatureNegativeOutputContinue
+getTemperatureNegativeOutput:
+	com acc
+	ldi acc2, 0x80
+	or acc, acc2	
+getTemperatureNegativeOutputContinue:
+	ret	;прямой код. Если старший бит 1 - то это отрицательное число
 
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0xE1,0xAB,0xAC,0xE2,0xAD,0xAE,0x62,0xAF,0xB0,0xB1
