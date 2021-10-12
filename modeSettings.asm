@@ -115,12 +115,8 @@ modeSettingsSetTime:
 	adc acc2, acc
 	RCALL DATA_WR
 
-	LDI		R17,0b00000010; 
-	RCALL	CMD_WR
+	call LCD_blinkOn
 
-	LDI		R17,0b00001111; 
-	RCALL	CMD_WR
-	
 	ldi acc, 6
 	RCALL shiftCursorRight
 

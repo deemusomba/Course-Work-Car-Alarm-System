@@ -31,6 +31,8 @@ AutoHeatingTimeSchedule_1m: .BYTE 1
 AutoHeatingTimeSchedule_DayOfWeek: .BYTE 1
 AutoHeatingWorkingTime_1m: .BYTE 1
 AutoHeatingWorkingTime_10m: .BYTE 1
+AutoHeatingTempMin: .BYTE 1
+AutoHeatingTempMax: .BYTE 1
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
 
@@ -134,7 +136,12 @@ start:
 	
 	ldi acc, 0xff
 	STS AutoHeatingTimeSchedule_DayOfWeek, acc
-
+	
+	ldi acc, 0x8f;-15
+	STS AutoHeatingTempMin, acc
+	ldi acc, 40
+	STS AutoHeatingTempMax, acc
+	
 	ldi acc, 0xff
 	ldi acc2, 0x11 
 	LDI YL, low(keyboardInputBuffer)
@@ -213,9 +220,8 @@ backLoopAfterRTTFlagsScan:
 	call updateDisplay
 	sbrc programFlags, 3
 	call enteringInfo
-	sbrc functionsFlags, 0
-	call autoHeatingMain
-	jmp bkdr
+
+	call autoHeatingMain; обработка автоподогрева
 	jmp backgroundLoop
 
 ;=========================================/Фоновый цикл=========================================

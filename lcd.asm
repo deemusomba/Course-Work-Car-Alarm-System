@@ -160,4 +160,12 @@ shiftCursorSecondRow:
 			ldi acc, 64
 			RCALL shiftCursorRight
 			ret
+
+LCD_blinkOn:
+			LDI		R17,0b00000010; 
+			RCALL	CMD_WR
+
+			LDI		R17,0b00001111; 
+			RCALL	CMD_WR
+			ret
 ;=========================================/”правление дисплеем=========================================

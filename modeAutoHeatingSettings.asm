@@ -110,12 +110,8 @@ modeAutoHeatingSettingsSetSchedule:
 	adc acc2, acc
 	RCALL DATA_WR
 
-	LDI		R17,0b00000010; 
-	RCALL	CMD_WR
+	call LCD_blinkOn
 
-	LDI		R17,0b00001111; 
-	RCALL	CMD_WR
-	
 	ldi acc, 6
 	RCALL shiftCursorRight
 
@@ -144,11 +140,7 @@ modeAutoHeatingSettingsSetWorkingTime:
 	adc acc2, acc
 	RCALL DATA_WR
 
-	LDI		R17,0b00000010; 
-	RCALL	CMD_WR
-
-	LDI		R17,0b00001111; 
-	RCALL	CMD_WR
+	call LCD_blinkOn
 	
 	ldi acc, 9
 	RCALL shiftCursorRight
@@ -163,6 +155,18 @@ modeAutoHeatingSettingsSetTempControl:
 	ldi acc, HIGH(_labelMenu23In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
+
+	;добавить отображение предыдущих настроек
+
+	call LCD_blinkOn
+	
+	ldi acc, 5
+	RCALL shiftCursorRight
+
+	ldi acc, 0x00
+	STS cursorCoords, acc
+
+
 	ret
 modeAutoHeatingSettingsSetOtherSettings:
 	ldi acc, LOW(_labelMenu24In<<1)
@@ -488,8 +492,8 @@ enteringInfoAutoHeatingTempControlCursorPosSwitch:
 	;в зависимости от положени€ курсора надо сдвинуть курсор
 
 	lds acc, cursorCoords
-	cpi acc, 2
-	brge enteringInfoAutoHeatingTempControlError
+	cpi acc, 1
+	brlo enteringInfoAutoHeatingTempControlError
 	ldi ZH, high(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi ZL, low(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi acc2, 3
@@ -505,9 +509,11 @@ enteringInfoAutoHeatingTempControlCursorPosOverflow:
 	jmp enteringInfoAutoHeatingTempControlCursorPosContinue
 
 enteringInfoAutoHeatingTempControlCursorPosTable:
-	call enteringInfoAutoHeatingTempControlCursorPos0
-	ret
 	call enteringInfoAutoHeatingTempControlCursorPos1
+	ret
+	call enteringInfoAutoHeatingTempControlCursorPos2
+	ret
+	call enteringInfoAutoHeatingTempControlCursorPos3
 	ret
 enteringInfoAutoHeatingTempControlKeysLettersCalling:
 	call enteringInfoAutoHeatingTempControlKeysLetters
@@ -516,10 +522,22 @@ enteringInfoAutoHeatingTempControlKeysLettersCalling:
 enteringInfoAutoHeatingTempControlError:
 	jmp enteringInfoSettingsTimeError
 	
-enteringInfoAutoHeatingTempControlCursorPos0:
+enteringInfoAutoHeatingTempControlCursorPos1:
+	lds acc2, pressedKey
+	cpi acc2, 4
+	brge enteringInfoAutoHeatingTempControlError
+	ldi acc, 0x30
+	add acc2, acc
+	RCALL DATA_WR
+
+	jmp enteringInfoSettingsTimeIncCursor	;сохранение нового значение курсора
+
 	ret
 
-enteringInfoAutoHeatingTempControlCursorPos1:
+enteringInfoAutoHeatingTempControlCursorPos2:
+	ret
+
+enteringInfoAutoHeatingTempControlCursorPos3:
 	ret
 
 enteringInfoAutoHeatingTempControlKeysLetters:
@@ -563,8 +581,32 @@ enteringInfoAutoHeatingTempControlKeysLettersA:
 enteringInfoAutoHeatingTempControlKeysLettersB:
 	jmp enteringInfoSettingsTimeKeysLettersB
 enteringInfoAutoHeatingTempControlKeysLettersC:
-	ret
+	ldi acc2, 'V'
+	RCALL DATA_WR
+	
+	ldi acc, 1
+	sts pressedKey, acc	
+
+	call enteringInfoWriteInKeyboardBuffer
+	
+	ldi acc, 7
+	RCALL shiftCursorRight	;сдвиг курсора
+
+	jmp enteringInfoSettingsTimeIncCursor
+
 enteringInfoAutoHeatingTempControlKeysLettersD:
+	ldi acc2, 'X'
+	RCALL DATA_WR
+	
+	ldi acc, 0
+	sts pressedKey, acc	
+
+	call enteringInfoWriteInKeyboardBuffer
+	
+	ldi acc, 7
+	RCALL shiftCursorRight	;сдвиг курсора
+
+	jmp enteringInfoSettingsTimeIncCursor
 	ret
 
 ;=========================================/¬вод в "“емпература"=========================================
