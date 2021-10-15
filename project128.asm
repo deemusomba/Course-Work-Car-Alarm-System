@@ -36,6 +36,12 @@ AutoHeatingTempMin1: .BYTE 1
 AutoHeatingTempMax10: .BYTE 1
 AutoHeatingTempMax1: .BYTE 1
 AutoHeatingTempControlOn: .BYTE 1
+AutoHeatingPreviousStartTime_10h: .BYTE 1
+AutoHeatingPreviousStartTime_1h: .BYTE 1
+AutoHeatingPreviousStartTime_10m: .BYTE 1
+AutoHeatingPreviousStartTime_1m: .BYTE 1
+
+
 
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
@@ -128,6 +134,10 @@ start:
 	STS AutoHeatingTimeSchedule_10m, acc
 	STS AutoHeatingTimeSchedule_1m, acc
 	STS AutoHeatingWorkingTime_1m, acc
+	STS AutoHeatingPreviousStartTime_10h, acc
+	STS AutoHeatingPreviousStartTime_1h, acc
+	STS AutoHeatingPreviousStartTime_10m, acc
+	STS AutoHeatingPreviousStartTime_1m, acc
 	sts AutoHeatingTempControlOn, acc
 	ldi acc, 0x01
 	STS AutoHeatingWorkingTime_10m, acc
@@ -202,7 +212,6 @@ backdoor:
 	;brne backgroundLoop
 
 bkdr:
-	call getTemperature
 	jmp backgroundLoop
 
 ;=========================================‘оновый цикл=========================================
@@ -230,7 +239,6 @@ backLoopAfterRTTFlagsScan:
 	sbrc programFlags, 3
 	call enteringInfo
 
-	call autoHeatingMain; обработка автоподогрева
 	jmp backgroundLoop
 
 ;=========================================/‘оновый цикл=========================================
@@ -389,6 +397,8 @@ RTT_ProgrammTimer:
 	ldi acc, 0
 	STS RTT_qS, acc
 
+	call autoHeatingMain; обработка автоподогрева
+
 	lds acc, RTT_1S
 	inc acc
 	STS RTT_1S, acc
@@ -407,6 +417,7 @@ RTT_ProgrammTimer:
 	ldi acc, 0
 	STS RTT_10S, acc
 
+	sbrs functionsFlags, 0
 	call RTT_checkSchedule
 
 	lds acc, RTT_1M
@@ -507,9 +518,7 @@ RTT_checkScheduleLoopBreak:
 	cp acc, acc2
 	brne RTT_checkScheduleRet
 
-	;//TODO:записать текущее врем€ в переменные	
-
-	sbr functionsFlags, 1
+	call autoHeatingTurnOn	
 
 RTT_checkScheduleRet:	ret
 ;=========================================/ѕроверка расписани€ автоподогрева=========================================
@@ -530,26 +539,20 @@ getTemperature:
 	in acc, ADCL
 	in acc2, ADCH
 	subi acc2, 1
-	subi acc, 0xDD
-	brmi getTemperatureBelowZero
-	jmp getTemperatureBelowContinue
+	subi acc, 0xDD; -40C
+	brcs getTemperatureBelowZero
+	jmp getTemperatureBelowZeroContinue
+
 getTemperatureBelowZero:
-	com acc
-	push acc2
-	mov acc2, acc
-	ldi acc, 0xff
-	sub acc, acc2
-	pop acc2
 	subi acc2, 1
-	
-getTemperatureBelowContinue:
+getTemperatureBelowZeroContinue:
 	cpi acc2, 1
-	brge getTemperatureCarryOn
+	brge getTemperatureCarryOn; готовимс€ к сдвигу. ≈сли в старшей части 1, то его в младшую часть
 	jmp getTemperatureCarryOnContinue
 getTemperatureCarryOn:
 	ldi acc2, 0x80
 getTemperatureCarryOnContinue:
-	lsr acc
+	lsr acc; acc/=2
 	or acc, acc2
 	subi acc, 40
 	brmi getTemperatureNegativeOutput

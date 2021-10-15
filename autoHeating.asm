@@ -24,7 +24,9 @@ autoHeatingMain:
 
 	;иначе - проверить время
 AutoHeatingTimeChecking:
-	;
+	sbrc acc, 7
+	pop acc
+	
 
 	ret
 
@@ -45,8 +47,14 @@ autoHeatingTempChecking:
 	ret
 autoHeatingTurnOn:
 	;//TODO:записать текущее время в переменные
-
-
+	lds acc, RTT_10H
+	STS AutoHeatingPreviousStartTime_10h, acc
+	lds acc, RTT_1H
+	STS AutoHeatingPreviousStartTime_1h, acc
+	lds acc, RTT_10m
+	STS AutoHeatingPreviousStartTime_10m, acc
+	lds acc, RTT_1m
+	STS AutoHeatingPreviousStartTime_1m, acc
 
 	sbi portD, 0
 	sbr functionsFlags,1
