@@ -475,6 +475,7 @@ RTT_24h_inc:
 	call RTT_checkSchedule
 	jmp backLoopAfterRTTFlagsScan
 ;=========================================/Часы=========================================
+;=========================================Проверка расписания автоподогрева=========================================
 RTT_checkSchedule:
 	lds acc, RTT_7Days
 	lds acc2, AutoHeatingTimeSchedule_DayOfWeek
@@ -505,11 +506,13 @@ RTT_checkScheduleLoopBreak:
 	lds acc2, AutoHeatingTimeSchedule_1m
 	cp acc, acc2
 	brne RTT_checkScheduleRet
-	
+
+	;//TODO:записать текущее время в переменные	
+
 	sbr functionsFlags, 1
-	sbr functionsFlags, 2
 
 RTT_checkScheduleRet:	ret
+;=========================================/Проверка расписания автоподогрева=========================================
 ;=========================================Сигнализация=========================================
 carScanning:
 	jmp backLoopAfterCarScan
@@ -522,7 +525,7 @@ updateSevenSigmDisplayLoop:
 	cbi portB, 0
 	ret
 ;=========================================/Сигнализация=========================================
-
+;=========================================Получение температуры=========================================
 getTemperature:
 	in acc, ADCL
 	in acc2, ADCH
@@ -557,7 +560,7 @@ getTemperatureNegativeOutput:
 	or acc, acc2	
 getTemperatureNegativeOutputContinue:
 	ret	;прямой код. Если старший бит 1 - то это отрицательное число
-
+;=========================================/Получение температуры=========================================
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0xE1,0xAB,0xAC,0xE2,0xAD,0xAE,0x62,0xAF,0xB0,0xB1
 
