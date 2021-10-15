@@ -363,8 +363,7 @@ enteringInfoSettingsTimeKeysLettersAWeekDay:
 enteringInfoSettingsTimeKeysLettersB:
 	cbr programFlags, 8
 	sbr programFlags, 4
-	LDI		R17,0b00001100; выключить мигание и подсветку курсора
-	RCALL	CMD_WR
+	call LCD_BlinkOff; выключить мигание и подсветку курсора
 	ret	
 enteringInfoSettingsTimeKeysLettersC:
 	lds acc, cursorCoords

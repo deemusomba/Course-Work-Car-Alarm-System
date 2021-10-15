@@ -31,8 +31,12 @@ AutoHeatingTimeSchedule_1m: .BYTE 1
 AutoHeatingTimeSchedule_DayOfWeek: .BYTE 1
 AutoHeatingWorkingTime_1m: .BYTE 1
 AutoHeatingWorkingTime_10m: .BYTE 1
-AutoHeatingTempMin: .BYTE 1
-AutoHeatingTempMax: .BYTE 1
+AutoHeatingTempMin10: .BYTE 1
+AutoHeatingTempMin1: .BYTE 1
+AutoHeatingTempMax10: .BYTE 1
+AutoHeatingTempMax1: .BYTE 1
+AutoHeatingTempControlOn: .BYTE 1
+
 KeyScanTimer: .BYTE 1; таймер опроса клавиатуры 
 KeyDebouncingTimer: .BYTE 1; таймер дребезга клавиатуры 
 
@@ -124,6 +128,7 @@ start:
 	STS AutoHeatingTimeSchedule_10m, acc
 	STS AutoHeatingTimeSchedule_1m, acc
 	STS AutoHeatingWorkingTime_1m, acc
+	sts AutoHeatingTempControlOn, acc
 	ldi acc, 0x01
 	STS AutoHeatingWorkingTime_10m, acc
 	ldi acc, 0x0
@@ -137,10 +142,14 @@ start:
 	ldi acc, 0xff
 	STS AutoHeatingTimeSchedule_DayOfWeek, acc
 	
-	ldi acc, 0x8f;-15
-	STS AutoHeatingTempMin, acc
-	ldi acc, 40
-	STS AutoHeatingTempMax, acc
+	ldi acc, 1;
+	STS AutoHeatingTempMin10, acc
+	ldi acc, 5;
+	STS AutoHeatingTempMin1, acc
+	ldi acc, 4
+	STS AutoHeatingTempMax10, acc
+	ldi acc, 0
+	STS AutoHeatingTempMax1, acc
 	
 	ldi acc, 0xff
 	ldi acc2, 0x11 
