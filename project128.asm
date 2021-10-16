@@ -56,8 +56,14 @@ cursorCoords: .BYTE 1;координаты курсора
 
 .org 0x00
 	jmp start
+.org 0x02
+	;jmp keyboardPressInt; i?ioaao?a i?a?uaaiey eeaa.
+.org 0x14
+	;jmp keyboardDebouncingInt;  ia?aoia ia i?ioaao?o i?a?uaaiey oaeia?a a?aaacaa  
 .org 0x18
 	jmp RTT_1msInt; 
+.org 0x20
+	;jmp rop;i?ioaao?a ii i?e?uaaiee ?aaeoey oaeia?a iia?aoi?a
 .org 0x2A
 	jmp ADC_Int
 .org 0x30
@@ -195,8 +201,8 @@ startkeyboardInputBufferInit:
 	;инициализация АЦП
 	;ldi acc, 0b10001101;включить АЦП, установить частоту в 125кГЦ, разрешение прерывания
 	;out ADCSRA, acc
-	ldi acc, 0b00000000;Настройки: AREF, ADC0
-	out ADMUX, acc
+	;ldi acc, 0b00000000;Настройки: AREF, ADC0
+	;out ADMUX, acc
 
 	sei; разрешение прерываний   
 ;=========================================/Инициализация=========================================
@@ -329,6 +335,7 @@ keyFound:
 ;=========================================Часы=========================================
 RTT_1msInt:
 	push acc
+	ldi acc, 0x00
 	CLI; запрет прерываний
 	out TCNT1H, acc
 	out TCNT1L, acc; обнуление таймера
