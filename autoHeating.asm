@@ -11,23 +11,76 @@ autoHeatingMain:
 	mov acc, r0
 	lds acc2, AutoHeatingTempMax1
 	add acc, acc2
-	push acc
-	mov acc2, temperature
-	andi acc, 0x80
-	cpi acc, 0x80	;если отрицательное, то проверить время
-	breq AutoHeatingTimeChecking
-	;если не отрицательное, то если температура больше максимальной - отключить
-	pop acc
-	cp acc2, acc
-	brge autoHeatingTurnOff
 
-	;иначе - проверить время
+	;если не отрицательное, то если температура больше максимальной - отключить
+	cp temperature, acc
+	brge autoHeatingTurnOffCalling
+	jmp AutoHeatingTimeChecking;иначе - проверить время
+
+autoHeatingTurnOffCalling:
+	jmp autoHeatingTurnOff
+
 AutoHeatingTimeChecking:
-	sbrc acc, 7
+	lds acc, RTT_10h
+	ldi acc2, 10
+	mul acc, acc2
+	mov acc, r0
+	lds acc2, RTT_1h
+	add acc, acc2; кол-во часов текущее
+	push acc
+	lds acc, AutoHeatingPreviousStartTime_10h
+	ldi acc2, 10
+	mul acc, acc2
+	mov acc, r0
+	lds acc2, AutoHeatingPreviousStartTime_1h
+	add acc, acc2; кол-во часов при прошлом запуске
+	pop acc2; текущее
+	sub acc2, acc; разница
+	brmi AutoHeatingTimeChecking1hFix; 0-23 = -23, час изменился
+	cpi acc2, 1
+	breq AutoHeatingTimeChecking1hFix; 23-22=1, час изменился
+	ldi acc, 0
+	;час не менялся
+AutoHeatingTimeChecking1hFixContinue:
+	lds acc2, RTT_10m
+	push acc
+	ldi acc, 10
+	mul acc2, acc
+	mov acc2, r0
 	pop acc
+	add acc, acc2; добавили 60, если час сменился
+	lds acc2, RTT_1m
+	add acc, acc2; кол-во минут текущее
+	push acc
 	
+	lds acc, AutoHeatingPreviousStartTime_10m
+	ldi acc2, 10
+	mul acc, acc2
+	mov acc, r0
+	lds acc2, AutoHeatingPreviousStartTime_1m
+	add acc2, acc; кол-во минут при прошлом запуске
+	
+	pop acc
+	sub acc, acc2
+	push acc; кол-во минут, которые прошли
+	
+	lds acc, AutoHeatingWorkingTime_10m
+	ldi acc2, 10
+	mul acc, acc2
+	mov acc, r0
+	lds acc2, AutoHeatingWorkingTime_1m
+	add acc, acc2; кол-во минут заданное
+	
+	pop acc2
+	sub acc, acc2
+	cpi acc, 0
+	breq autoHeatingTurnOff
 
 	ret
+
+AutoHeatingTimeChecking1hFix:
+	ldi acc, 60; добавляем 60 минут в кол-во минут текущих
+	jmp AutoHeatingTimeChecking1hFixContinue
 
 autoHeatingTempChecking:
 	lds acc, AutoHeatingTempMin10

@@ -351,6 +351,8 @@ enteringInfoSettingsTimeKeysLettersA5:
 	STS RTT_1s	, acc
 enteringInfoSettingsTimeKeysLettersA6:
 	call enteringInfoClearKeyInputBuffer
+	
+	call autoHeatingTurnOff; отключаем автоподогрев на 
 
 	jmp enteringInfoSettingsTimeKeysLettersB 
 
