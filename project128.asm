@@ -10,7 +10,7 @@
 .def programFlags=R22; 0|0|carThing I dont remember|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
 .def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|autoHeatingTemp|autoHeatingSchedule|keyScan|msAdd
 .def functionsFlags=R24; 0|0|0|0|autoHeatingTime|autoHeatingTemp|autoHeatingSchedule|autoHeatingTurnOn
-
+.def temperature=R15
 .dseg
 .ORG SRAM_START+100
 RTT_mS: .BYTE 1; милисекунда
@@ -56,14 +56,10 @@ cursorCoords: .BYTE 1;координаты курсора
 
 .org 0x00
 	jmp start
-.org 0x02
-	;jmp keyboardPressInt; процедура прерывания клав.
-.org 0x14
-	;jmp keyboardDebouncingInt;  переход на процедуру прерывания таймера дребезга  
 .org 0x18
 	jmp RTT_1msInt; 
-.org 0x20
-	;jmp rop;процедура по прирывании реакция таймера оператора
+.org 0x2A
+	jmp ADC_Int
 .org 0x30
 	jmp start
 
@@ -197,8 +193,8 @@ startkeyboardInputBufferInit:
 	ldi acc, 0xff; обнуление семисигментного индикатора
 	call updateSevenSigmDisplay
 	;инициализация АЦП
-	ldi acc, 0b11100101; включить АЦП, установить частоту в 125кГЦ, запуск преобразовния и перезапуска
-	out ADCSRA, acc
+	;ldi acc, 0b10001101;включить АЦП, установить частоту в 125кГЦ, разрешение прерывания
+	;out ADCSRA, acc
 	ldi acc, 0b00000000;Настройки: AREF, ADC0
 	out ADMUX, acc
 
@@ -332,8 +328,7 @@ keyFound:
 ;=========================================/Клавиатура=========================================
 ;=========================================Часы=========================================
 RTT_1msInt:
-	sts AccReserve, acc
-	ldi acc, 0x00
+	push acc
 	CLI; запрет прерываний
 	out TCNT1H, acc
 	out TCNT1L, acc; обнуление таймера
@@ -342,11 +337,12 @@ RTT_1msInt:
 	sbr RTTFlags,1;установка флага "добавилась мсекунда"
 	ldi acc, 0
 	out OCF1A,acc;
-	lds acc, AccReserve
+	pop acc
 	reti
 
 RTT_main:
-	;тут какая-то логика для программных таймеров и их флагов
+	cbr RTTFlags,1;снятие флага "добавилась мсекунда"
+
 	sbrs programFlags, 0
 	jmp RTT_KeyScanTimer
 	lds acc, KeyDebouncingTimer
@@ -372,7 +368,7 @@ RTT_KeyScanTimer:
 	STS KeyScanTimer, acc
 			
 RTT_ProgrammTimer:
-	cbr RTTFlags,1;снятие флага "добавилась мсекунда"
+
 
 	lds acc, RTT_mS
 	inc acc
@@ -382,7 +378,9 @@ RTT_ProgrammTimer:
 	brne RTT_end
 	ldi acc, 0
 	STS RTT_mS, acc
-	;тут можно выставить какой-нибудь флаг
+	
+	;ldi acc, 0b11001101;запустить преобразование
+	;out ADCSRA, acc
 
 	lds acc, RTT_qS
 	inc acc
@@ -390,13 +388,11 @@ RTT_ProgrammTimer:
 	;проверка на секунду
 	cpi acc, 4
 	brne RTT_end
-	
-	sbrs programFlags, 3; если находится в состоянии "в режиме", то не обновлять
-	sbr programFlags, 4; установка флага "обновить дисплей" раз в секунду
-
 	ldi acc, 0
 	STS RTT_qS, acc
 
+	sbrs programFlags, 3; если находится в состоянии "в режиме", то не обновлять
+	sbr programFlags, 4; установка флага "обновить дисплей" раз в секунду
 	call autoHeatingMain; обработка автоподогрева
 
 	lds acc, RTT_1S
@@ -535,6 +531,10 @@ updateSevenSigmDisplayLoop:
 	ret
 ;=========================================/Сигнализация=========================================
 ;=========================================Получение температуры=========================================
+ADC_Int:
+	push acc
+	push acc2
+
 getTemperature:
 	in acc, ADCL
 	in acc2, ADCH
@@ -560,9 +560,12 @@ getTemperatureCarryOnContinue:
 getTemperatureNegativeOutput:
 	com acc
 	ldi acc2, 0x80
-	or acc, acc2	
+	or acc, acc2		;прямой код. Если старший бит 1 - то это отрицательное число
 getTemperatureNegativeOutputContinue:
-	ret	;прямой код. Если старший бит 1 - то это отрицательное число
+	mov temperature, acc
+	pop acc2
+	pop acc
+	reti
 ;=========================================/Получение температуры=========================================
 displayRecodingTable:
 .DB 0x41,0xA0,0x42,0xA1,0x44,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,0x50,0x43,0x54,0xA9,0xAA,0x58,0xE1,0xAB,0xAC,0xE2,0xAD,0xAE,0x62,0xAF,0xB0,0xB1

@@ -12,8 +12,7 @@ autoHeatingMain:
 	lds acc2, AutoHeatingTempMax1
 	add acc, acc2
 	push acc
-	rcall getTemperature
-	mov acc2, acc
+	mov acc2, temperature
 	andi acc, 0x80
 	cpi acc, 0x80	;если отрицательное, то проверить время
 	breq AutoHeatingTimeChecking
@@ -36,15 +35,23 @@ autoHeatingTempChecking:
 	mul acc, acc2
 	mov acc, r0
 	lds acc2, AutoHeatingTempMin1
-	add acc, acc2
+	add acc, acc2;получили значение минимальной темп-ры
 	push acc
-	rcall getTemperature
+	mov acc, temperature; получить значение текущей темп-ры
+	cpi acc, 0x80
+	brlo autoHeatingTempCheckingPositive; положительное значение темп-ры
 	mov acc2, acc
 	andi acc2, 0b01111111
 	pop acc
 	cp acc2, acc
 	brge autoHeatingTurnOn
+autoHeatingTempCheckingRet:
 	ret
+
+autoHeatingTempCheckingPositive:
+	pop acc
+	ret
+
 autoHeatingTurnOn:
 	;//TODO:записать текущее время в переменные
 	lds acc, RTT_10H
