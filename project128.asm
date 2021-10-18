@@ -9,8 +9,9 @@
 .def acc2=R17;вспомогательный регистр для передачи данных между блоками
 .def programFlags=R22; 0|0|carThing I dont remember|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
 .def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|autoHeatingTemp|autoHeatingSchedule|keyScan|msAdd
-.def functionsFlags=R24; 0|0|0|0|autoHeatingTime|autoHeatingTemp|autoHeatingSchedule|autoHeatingTurnOn
-.def temperature=R15
+.def functionsFlags=R24; 0|0|0|autoHeatingGeneralOn|autoHeatingTempControlOn|autoHeatingTimeControlON|autoHeatingScheduleOn|autoHeatingTurnOn
+.def temperature=R25;температура двигателя
+;r26 иногда это третий аккумулятор
 .dseg
 .ORG SRAM_START+100
 RTT_mS: .BYTE 1; милисекунда
@@ -157,6 +158,9 @@ start:
 	ldi acc, 0
 	STS AutoHeatingTempMax1, acc
 	
+	ldi acc, 0b00010010
+	mov functionsFlags, acc	
+
 	ldi acc, 0xff
 	ldi acc2, 0x11 
 	LDI YL, low(keyboardInputBuffer)
@@ -329,6 +333,7 @@ keyFound:
 ;=========================================Часы=========================================
 RTT_1msInt:
 	push acc
+	push acc2
 	ldi acc, 0x00
 	CLI; запрет прерываний
 	out TCNT1H, acc
@@ -338,6 +343,7 @@ RTT_1msInt:
 	sbr RTTFlags,1;установка флага "добавилась мсекунда"
 	ldi acc, 0
 	out OCF1A,acc;
+	pop acc2
 	pop acc
 	reti
 
@@ -607,10 +613,10 @@ _labelMenu22In:
 _labelMenu23:
 .DB "2.3 ТЕМПЕРАТУРА",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu23In:
-.DB "ИСП. V  ВКЛ -15С",1,0,"ВЫКЛ 40С CVDX AO",'e',0
+.DB "ВКЛ -15С",1,0,"ВЫКЛ 40С A-V B-X",'e',0
 _labelMenu24:
-.DB "2.4 ДОП. ОПЦИИ",1,0,"А-ВOЙТИ  B-НАЗАД",'e',0
+.DB "2.4 НАСТРОЙКИ",1,0,"А-ВOЙТИ  B-НАЗАД",'e'
 _labelMenu24In:
-.DB "П:V С:V",0,12,"A-ОК",1,3,"C-V D-X В-ВЫХ",'e',0
+.DB "ВКЛ РВТ C-V A-ОК", 1,0," X  XXX D-X B-ВХ",'e',0
 
 

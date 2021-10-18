@@ -156,21 +156,7 @@ modeAutoHeatingSettingsSetTempControl:
 	mov ZH, acc
 	call DATA_WR_from_Z
 	
-	LDI		R17,(1<<7)|(5+0x40*0)
-	RCALL	CMD_WR
-
-	lds acc, AutoHeatingTempControlOn
-	cpi acc, 0
-	breq modeAutoHeatingSettingsSetTempControlX
-	ldi acc2,'V'
-	jmp modeAutoHeatingSettingsSetTempControlContinue
-
-modeAutoHeatingSettingsSetTempControlX:
-	ldi acc2,'X'
-modeAutoHeatingSettingsSetTempControlContinue:
-	RCALL DATA_WR
-
-	LDI		R17,(1<<7)|(0x0D+0x40*0)
+	LDI		R17,(1<<7)|(0x05+0x40*0)
 	RCALL	CMD_WR
 
 	lds acc2, AutoHeatingTempMin10
@@ -205,7 +191,6 @@ modeAutoHeatingSettingsSetTempControlContinue:
 	ldi acc, 0x00
 	STS cursorCoords, acc
 
-
 	ret
 modeAutoHeatingSettingsSetOtherSettings:
 	ldi acc, LOW(_labelMenu24In<<1)
@@ -213,7 +198,64 @@ modeAutoHeatingSettingsSetOtherSettings:
 	ldi acc, HIGH(_labelMenu24In<<1)
 	mov ZH, acc
 	call DATA_WR_from_Z
+
+	LDI		R17,(1<<7)|(0x01+0x40*1)
+	RCALL	CMD_WR
+	
+	mov acc, functionsFlags
+	lsl acc
+	lsl acc
+	lsl acc
+	
+	lsl acc
+	brcs modeAutoHeatingSettingsSetOtherSettingsOutputV
+	ldi acc2, 'X'
+	jmp modeAutoHeatingSettingsSetOtherSettingsOutputContinue
+modeAutoHeatingSettingsSetOtherSettingsOutputV:
+	ldi acc2, 'V'
+modeAutoHeatingSettingsSetOtherSettingsOutputContinue:
+	push acc
+	rcall DATA_WR
+
+	LDI		R17,(1<<7)|(0x04+0x40*1)
+	RCALL	CMD_WR
+	
+	pop acc; сдвинутый functionsFlags 
+
+	ldi acc2, 4
+	push acc2; итератор
+
+modeAutoHeatingSettingsSetOtherSettingsOutputLoop:
+	pop acc2
+	dec acc2
+	push acc2
+	cpi acc2, 0
+	breq modeAutoHeatingSettingsSetOtherSettingsRet
+	lsl acc
+	brcs modeAutoHeatingSettingsSetOtherSettingsOutput1V
+	ldi acc2, 'X'
+	jmp modeAutoHeatingSettingsSetOtherSettingsOutput1Continue
+modeAutoHeatingSettingsSetOtherSettingsOutput1V:
+	ldi acc2, 'V'
+modeAutoHeatingSettingsSetOtherSettingsOutput1Continue:
+	push acc
+	rcall DATA_WR
+	pop acc
+
+	jmp modeAutoHeatingSettingsSetOtherSettingsOutputLoop
+modeAutoHeatingSettingsSetOtherSettingsRet:
+	pop acc
+	
+	rcall LCD_blinkOn
+	rcall shiftCursorSecondRow
+	ldi acc, 1
+	rcall shiftCursorRight
+	
+	ldi acc, 0x00
+	STS cursorCoords, acc	
+
 	ret
+
 
 ;=========================================Ввод в "Автопогрев"=========================================
 ;=========================================Ввод в "Расписание"=========================================
@@ -531,9 +573,6 @@ enteringInfoAutoHeatingTempControlCursorPosSwitch:
 	;в зависимости от положения курсора надо сдвинуть курсор
 
 	lds acc, cursorCoords
-	cpi acc, 1
-	brlo enteringInfoAutoHeatingTempControlError
-	dec acc
 	ldi ZH, high(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi ZL, low(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi acc2, 3
@@ -606,7 +645,7 @@ enteringInfoAutoHeatingTempControlCursorPos4:
 
 enteringInfoAutoHeatingTempControlKeysLetters:
 	lds acc, pressedKey
-	cpi acc, 0x0E
+	cpi acc, 0x0C
 	brge enteringInfoAutoHeatingTempControlError1
 
 	subi acc, 0x0A
@@ -632,16 +671,10 @@ enteringInfoAutoHeatingTempControlKeysLettersSwitchTable:
 	ret
 	call enteringInfoAutoHeatingTempControlKeysLettersB
 	ret
-	call enteringInfoAutoHeatingTempControlKeysLettersC
-	ret
-	call enteringInfoAutoHeatingTempControlKeysLettersD
-	ret
 
 enteringInfoAutoHeatingTempControlKeysLettersA:
 	ldi yl, low(keyboardInputBuffer)
 	ldi yh, high(keyboardInputBuffer)
-	ld acc, y+
-	STS AutoHeatingTempControlOn, acc
 	ld acc, y+
 	cpi acc, 0xff
 	breq enteringInfoAutoHeationTempControlKeysLettersA1
@@ -668,34 +701,134 @@ enteringInfoAutoHeationTempControlKeysLettersA4:
 
 enteringInfoAutoHeatingTempControlKeysLettersB:
 	jmp enteringInfoSettingsTimeKeysLettersB
-enteringInfoAutoHeatingTempControlKeysLettersC:
-	ldi acc2, 'V'
-	RCALL DATA_WR
-	
-	ldi acc, 1
-	sts pressedKey, acc	
 
-	call enteringInfoWriteInKeyboardBuffer
-	
-	ldi acc, 7
-	RCALL shiftCursorRight	;сдвиг курсора
-
-	jmp enteringInfoSettingsTimeIncCursor
-
-enteringInfoAutoHeatingTempControlKeysLettersD:
-	ldi acc2, 'X'
-	RCALL DATA_WR
-	
-	ldi acc, 0
-	sts pressedKey, acc	
-
-	call enteringInfoWriteInKeyboardBuffer
-	
-	ldi acc, 7
-	RCALL shiftCursorRight	;сдвиг курсора
-
-	jmp enteringInfoSettingsTimeIncCursor
-	ret
 
 ;=========================================/Ввод в "Температура"=========================================
+;=========================================Ввод в "Настройки"=========================================
+enteringInfoAutoHeatingOtherOptionsCursorPosSwitch:
+	lds acc, pressedKey
+	cpi acc, 0x0A
+	brlo enteringInfoAutoHeatingOtherOptionsError
+	jmp enteringInfoAutoHeatingOtherOptionsKeysLetters
+
+enteringInfoAutoHeatingOtherOptionsError:
+	ret
+	
+enteringInfoAutoHeatingOtherOptionsKeysLetters:
+
+	lds acc, pressedKey
+	cpi acc, 0x0E
+	brge enteringInfoAutoHeatingOtherOptionsError1
+
+	subi acc, 0x0A
+	ldi ZH, high(enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchTable)
+	ldi ZL, low(enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchTable)
+	ldi acc2, 3
+	mul acc, acc2
+	add r30, r0
+	brcs enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchOverflow
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchContinue:
+	ijmp
+
+enteringInfoAutoHeatingOtherOptionsError1:
+	ret
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchOverflow:
+	inc r31
+	jmp enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchContinue
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchTable:
+	call enteringInfoAutoHeatingOtherOptionsKeysLettersA
+	ret
+	call enteringInfoAutoHeatingOtherOptionsKeysLettersB
+	ret
+	call enteringInfoAutoHeatingOtherOptionsKeysLettersC
+	ret
+	call enteringInfoAutoHeatingOtherOptionsKeysLettersD
+	ret
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersA:
+	jmp enteringInfoAutoHeatingOtherOptionsKeysLettersB
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersB:
+	jmp enteringInfoSettingsTimeKeysLettersB
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersC:
+	ldi acc2, 0x56; V
+	RCALL DATA_WR	
+
+	ldi acc, 1	
+	call enteringInfoAutoHeatingOtherOptionsWriteData
+	
+	call enteringInfoAutoHeatingOtherOptionsIncCursor
+	ret	
+enteringInfoAutoHeatingOtherOptionsKeysLettersD:
+	ldi acc2, 0x58; X
+	RCALL DATA_WR
+
+	ldi acc, 0
+	call enteringInfoAutoHeatingOtherOptionsWriteData
+
+	call enteringInfoAutoHeatingOtherOptionsIncCursor
+	ret	
+
+enteringInfoAutoHeatingOtherOptionsWriteData: 
+	;в зависимости от положения курсора заменить байт на введенный
+	;в acc лежит 0 или 1
+	cpi acc, 1
+	breq enteringInfoAutoHeatingOtherOptionsWriteData1
+	jmp enteringInfoAutoHeatingOtherOptionsWriteData0
+	
+enteringInfoAutoHeatingOtherOptionsWriteData0:
+	ldi acc, 0b11101111
+	lds acc2, cursorCoords
+	push acc2
+enteringInfoAutoHeatingOtherOptionsWriteData0Loop:
+	pop acc2
+	cpi acc2, 0
+	breq enteringInfoAutoHeatingOtherOptionsWriteData0Break
+	dec acc2
+	push acc2
+
+	lsr acc
+	ori acc, 0x80
+	jmp enteringInfoAutoHeatingOtherOptionsWriteData0Loop
+
+enteringInfoAutoHeatingOtherOptionsWriteData0Break:
+	and functionsFlags, acc	
+	ret
+enteringInfoAutoHeatingOtherOptionsWriteData1:
+	ldi acc, 0b00010000
+	lds acc2, cursorCoords
+	push acc2
+enteringInfoAutoHeatingOtherOptionsWriteData1Loop:
+	pop acc2
+	cpi acc2, 0
+	breq enteringInfoAutoHeatingOtherOptionsWriteData1Break
+	dec acc2
+	push acc2
+
+	lsr acc
+	jmp enteringInfoAutoHeatingOtherOptionsWriteData1Loop
+
+enteringInfoAutoHeatingOtherOptionsWriteData1Break:
+	or functionsFlags, acc	
+	ret
+enteringInfoAutoHeatingOtherOptionsIncCursor:
+	lds acc, cursorCoords
+	cpi acc, 0
+	brne enteringInfoAutoHeatingOtherOptionsIncCursorContinue
+	ldi acc, 2
+	call shiftCursorRight
+enteringInfoAutoHeatingOtherOptionsIncCursorContinue:
+	inc acc
+	STS cursorCoords, acc
+	cpi acc, 4
+	breq enteringInfoAutoHeatingOtherOptionsBreak
+	ret
+enteringInfoAutoHeatingOtherOptionsBreak:
+	call LCD_blinkOff
+	ret
+;=========================================/Ввод в "Настройки"=========================================
 ;=========================================/Ввод в "Автопогрев"=========================================
