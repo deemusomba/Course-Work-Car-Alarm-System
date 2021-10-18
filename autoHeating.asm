@@ -1,10 +1,15 @@
 
 ;=========================================Автоподогрев=========================================
 autoHeatingMain:
+	sbrs functionsFlags, 4; если не включен, то и не делать ничего
+	ret
+autoHeatingEntryPoint:
 	sbrs functionsFlags,0
-	jmp autoHeatingTempChecking; автоподогрев не включен, но проверить, надо ли его включать по температуре
+	jmp autoHeatingTempChecking; автоподогрев не включен, то проверить, надо ли его включать по температуре
 	;автоподогрев включен, проверить а не пора ли выключать
 	;по температуре
+	sbrs functionsFlags, 1; если контроль по темп-ре не включен, то проверить включен ли по времени
+	jmp autoHeatingTimeCheckingCalling
 	lds acc, AutoHeatingTempMax10
 	ldi acc2, 10
 	mul acc, acc2
@@ -12,9 +17,12 @@ autoHeatingMain:
 	lds acc2, AutoHeatingTempMax1
 	add acc, acc2
 
-	;если не отрицательное, то если температура больше максимальной - отключить
+	;если температура больше максимальной - отключить
 	cp temperature, acc
 	brge autoHeatingTurnOffCalling
+autoHeatingTimeCheckingCalling:
+	sbrs functionsFlags, 2; если контроль по времени работы не включен, то выход
+	ret
 	jmp AutoHeatingTimeChecking;иначе - проверить время
 
 autoHeatingTurnOffCalling:
@@ -83,6 +91,8 @@ AutoHeatingTimeChecking1hFix:
 	jmp AutoHeatingTimeChecking1hFixContinue
 
 autoHeatingTempChecking:
+	sbrs functionsFlags, 1; если контроль по темп-ре не включен, то выход
+	ret
 	lds acc, AutoHeatingTempMin10
 	ldi acc2, 10
 	mul acc, acc2

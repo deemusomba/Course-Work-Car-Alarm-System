@@ -253,6 +253,7 @@ modeAutoHeatingSettingsSetOtherSettingsRet:
 	
 	ldi acc, 0x00
 	STS cursorCoords, acc	
+	sts keyboardInputBuffer, acc
 
 	ret
 
@@ -749,7 +750,22 @@ enteringInfoAutoHeatingOtherOptionsKeysLettersSwitchTable:
 	ret
 
 enteringInfoAutoHeatingOtherOptionsKeysLettersA:
+	lds acc, keyboardInputBuffer
+	sbrc acc, 4; если было выбрано "вкл", то проверить, а выбран ли один из триггеров отключения
+	jmp enteringInfoAutoHeatingOtherOptionsKeysLettersAFix
+	
+enteringInfoAutoHeatingOtherOptionsKeysLettersA1:
+	mov functionsFlags, acc
+	call enteringInfoClearKeyInputBuffer
 	jmp enteringInfoAutoHeatingOtherOptionsKeysLettersB
+
+enteringInfoAutoHeatingOtherOptionsKeysLettersAFix:
+	mov acc2, acc
+	andi acc2, 0b00000110
+	cpi acc2, 0
+	brne enteringInfoAutoHeatingOtherOptionsKeysLettersA1
+	ori acc, 0b00000010; выбрать что триггер выключения - температура
+	jmp enteringInfoAutoHeatingOtherOptionsKeysLettersA1
 
 enteringInfoAutoHeatingOtherOptionsKeysLettersB:
 	jmp enteringInfoSettingsTimeKeysLettersB
@@ -796,7 +812,9 @@ enteringInfoAutoHeatingOtherOptionsWriteData0Loop:
 	jmp enteringInfoAutoHeatingOtherOptionsWriteData0Loop
 
 enteringInfoAutoHeatingOtherOptionsWriteData0Break:
-	and functionsFlags, acc	
+	lds acc2, keyboardInputBuffer
+	and acc2, acc	
+	sts keyboardInputBuffer, acc2
 	ret
 enteringInfoAutoHeatingOtherOptionsWriteData1:
 	ldi acc, 0b00010000
@@ -813,7 +831,9 @@ enteringInfoAutoHeatingOtherOptionsWriteData1Loop:
 	jmp enteringInfoAutoHeatingOtherOptionsWriteData1Loop
 
 enteringInfoAutoHeatingOtherOptionsWriteData1Break:
-	or functionsFlags, acc	
+	lds acc2, keyboardInputBuffer
+	or acc2, acc	
+	sts keyboardInputBuffer, acc2
 	ret
 enteringInfoAutoHeatingOtherOptionsIncCursor:
 	lds acc, cursorCoords

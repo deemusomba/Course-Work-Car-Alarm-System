@@ -158,7 +158,7 @@ start:
 	ldi acc, 0
 	STS AutoHeatingTempMax1, acc
 	
-	ldi acc, 0b00010010
+	ldi acc, 0b00000000
 	mov functionsFlags, acc	
 
 	ldi acc, 0xff
@@ -420,9 +420,15 @@ RTT_ProgrammTimer:
 	ldi acc, 0
 	STS RTT_10S, acc
 
-	sbrs functionsFlags, 0
-	call RTT_checkSchedule
+	mov acc, functionsFlags
+	andi acc, 0b00011000; интересуют флаги вкл и расп
+	cpi acc, 0b00011000; если вкл и расп, то провер€ем расписание
+	breq RTT_checkScheduleCalling
+	jmp RTT_scheduleContinue
 
+RTT_checkScheduleCalling:
+	call RTT_checkSchedule
+RTT_scheduleContinue:
 	lds acc, RTT_1M
 	inc acc
 	STS RTT_1M, acc
@@ -491,6 +497,7 @@ RTT_24h_inc:
 ;=========================================/„асы=========================================
 ;=========================================ѕроверка расписани€ автоподогрева=========================================
 RTT_checkSchedule:
+	sbrc functionsFlags, 0; если уже работает автоподогрев
 	ret
 	lds acc, RTT_7Days
 	lds acc2, AutoHeatingTimeSchedule_DayOfWeek
