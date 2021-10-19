@@ -424,7 +424,7 @@ enteringInfoAutoHeatingScheduleKeysLettersA3:
 	STS AutoHeatingTimeSchedule_1m	, acc
 enteringInfoAutoHeatingScheduleKeysLettersA4:
 	LD acc, Y+
-	cpi acc, 0xff
+	cpi acc, 0x0
 	breq enteringInfoAutoHeatingScheduleKeysLettersA5
 	STS AutoHeatingTimeSchedule_DayOfWeek, acc
 enteringInfoAutoHeatingScheduleKeysLettersA5:

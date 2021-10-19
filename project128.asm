@@ -146,7 +146,7 @@ start:
 	STS cursorCoords, acc
 	STS keyboardInputBuffer, acc
 	
-	ldi acc, 0xff
+	ldi acc, 0x0
 	STS AutoHeatingTimeSchedule_DayOfWeek, acc
 	
 	ldi acc, 1;
