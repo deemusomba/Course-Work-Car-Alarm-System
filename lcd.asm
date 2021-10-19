@@ -155,10 +155,8 @@ shiftCursorLeft:;кол-во раз в r16
 shiftCursorLeftRet:			
 			ret
 shiftCursorSecondRow:
-			LDI		R17,0b00000010; вернуть курсор в начальное положение
+			LDI		R17,(1<<7)|(0+0x40*1)
 			RCALL	CMD_WR
-			ldi acc, 64
-			RCALL shiftCursorRight
 			ret
 
 LCD_blinkOn:

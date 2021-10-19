@@ -113,6 +113,56 @@ modeMainDayOfWeekOverflow:
 
 modeMainContinue:
 	call DATA_WR_from_Z
+	
+	sbrc functionsFlags, 4
+	jmp modeMainShowAutoheating
+	ret
+
+modeMainShowAutoheating:
+	LDI		R17,(1<<7)|(0+0x40*1)
+	RCALL	CMD_WR
+
+	ldi acc2, '*'
+	RCALL DATA_WR	
+
+	sbrc functionsFlags, 3
+	jmp modeMainShowAutoheatingSchedule
+	rcall modeMainShowAutoheatingClear
+modeMainShowAutoheating3:
+	sbrc functionsFlags, 2
+	jmp modeMainShowAutoheatingWorkingTime
+	rcall modeMainShowAutoheatingClear
+modeMainShowAutoheating2:
+	sbrc functionsFlags, 1
+	jmp modeMainShowAutoheatingTempControl
+	rcall modeMainShowAutoheatingClear
+modeMainShowAutoheating1:
+	sbrc functionsFlags, 0
+	jmp modeMainShowAutoheatingStatus
+	ret
+
+modeMainShowAutoheatingSchedule:
+	ldi acc2, 'P'
+	RCALL DATA_WR
+	jmp modeMainShowAutoheating3
+
+modeMainShowAutoheatingWorkingTime:
+	ldi acc2, 'B'
+	RCALL DATA_WR
+	jmp modeMainShowAutoheating2
+
+modeMainShowAutoheatingTempControl:
+	ldi acc2, 'T'
+	RCALL DATA_WR
+	jmp modeMainShowAutoheating1
+
+modeMainShowAutoheatingStatus:
+	ldi acc2, 'A'
+	RCALL DATA_WR
+	ret
+modeMainShowAutoheatingClear:
+	ldi acc2, ' '
+	RCALL DATA_WR
 	ret
 
 displayEnteringMenuMenuSwitchCalling: call displayEnteringMenuMenuSwitch
