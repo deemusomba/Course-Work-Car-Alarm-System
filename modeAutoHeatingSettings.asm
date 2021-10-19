@@ -444,17 +444,13 @@ enteringInfoAutoHeatingScheduleKeysLettersC:
 	
 	call enteringInfoAutoHeatingScheduleWriteData
 	
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
+	call enteringInfoSettingsTimeIncCursor
 	ret	
 enteringInfoAutoHeatingScheduleKeysLettersD:
 	ldi acc2, 0x58; X
 	RCALL DATA_WR
 	
-	lds acc, cursorCoords
-	inc acc
-	STS cursorCoords, acc
+	call enteringInfoSettingsTimeIncCursor
 	ret	
 
 enteringInfoAutoHeatingScheduleKeyBindingError:
