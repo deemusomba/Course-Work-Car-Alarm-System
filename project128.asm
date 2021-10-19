@@ -8,7 +8,7 @@
 .def acc=R16;аккумулятор
 .def acc2=R17;вспомогательный регистр для передачи данных между блоками
 .def programFlags=R22; 0|0|carThing I dont remember|inModeEntered|inMode|updateDisplay|DebouncingEnd|keyPress
-.def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|autoHeatingTemp|autoHeatingSchedule|keyScan|msAdd
+.def RTTFlags=R23; real-time timer programFlags  0|0|0|0|0|minuteAdd|keyScan|msAdd
 .def functionsFlags=R24; 0|0|0|autoHeatingGeneralOn|autoHeatingTempControlOn|autoHeatingTimeControlON|autoHeatingScheduleOn|autoHeatingTurnOn
 .def temperature=R25;температура двигателя
 ;r26 иногда это третий аккумулятор
@@ -234,6 +234,8 @@ backLoopAfterOpScan:
 	jmp RTT_main
 
 backLoopAfterRTTFlagsScan:
+	sbrc RTTFlags, 2; добавилась минута
+	call RTT_beforeCheckSchedule
 	sbrc programFlags, 2
 	call updateDisplay
 	sbrc programFlags, 3
@@ -420,18 +422,12 @@ RTT_ProgrammTimer:
 	ldi acc, 0
 	STS RTT_10S, acc
 
-	mov acc, functionsFlags
-	andi acc, 0b00011000; интересуют флаги вкл и расп
-	cpi acc, 0b00011000; если вкл и расп, то проверяем расписание
-	breq RTT_checkScheduleCalling
-	jmp RTT_scheduleContinue
-
-RTT_checkScheduleCalling:
-	call RTT_checkSchedule
-RTT_scheduleContinue:
 	lds acc, RTT_1M
 	inc acc
 	STS RTT_1M, acc
+	
+	sbr RTTFlags, 4; сменилась минута
+
 	;проверка на количество минут
 	cpi acc, 10
 	brne RTT_end
@@ -496,6 +492,14 @@ RTT_24h_inc:
 	jmp backLoopAfterRTTFlagsScan
 ;=========================================/Часы=========================================
 ;=========================================Проверка расписания автоподогрева=========================================
+RTT_beforeCheckSchedule:
+	cbr RTTFlags, 4
+
+	mov acc, functionsFlags
+	andi acc, 0b00011000; интересуют флаги вкл и расп
+	cpi acc, 0b00011000; если вкл и расп, то проверяем расписание
+	brne RTT_checkScheduleRet
+
 RTT_checkSchedule:
 	sbrc functionsFlags, 0; если уже работает автоподогрев
 	ret
