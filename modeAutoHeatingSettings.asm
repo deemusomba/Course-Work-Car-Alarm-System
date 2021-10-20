@@ -16,8 +16,8 @@ modeAutoHeatingSettings:
 modeAutoHeatingSettingsSubsLabels:
 	ldi ZH, high(modeAutoHeatingSettingsSubsLabelsSwitchTable)
 	ldi ZL, low(modeAutoHeatingSettingsSubsLabelsSwitchTable)
-	cpi acc, 5;//TODO: добавить в алгоритмы
-	brge modeAutoHeatingSettingsSubsLabelsSwitchFix//TODO: добавить в алгоритмы
+	cpi acc, 5
+	brge modeAutoHeatingSettingsSubsLabelsSwitchFix
 	dec acc
 	ldi acc2, 3
 	mul acc, acc2
@@ -28,9 +28,9 @@ modeAutoHeatingSettingsSubsLabelsSwitchContinue:
 	ijmp
 
 modeAutoHeatingSettingsSubsLabelsSwitchFix:
-	call keyBindingsLetterCDecSubMode//TODO: добавить в алгоритмы
+	call keyBindingsLetterCDecSubMode
 	sbr programFlags, 4
-	jmp modeSettingsSubsLabelsSwitchContinue//TODO: добавить в алгоритмы
+	ret
 
 modeAutoHeatingSettingsSubsLabelsSwitchOverflow:
 	inc r31
@@ -532,6 +532,8 @@ enteringInfoAutoHeatingWorkingTimeCursorPos1:
 	add acc2, acc
 	RCALL DATA_WR
 	
+	call LCD_BlinkOff
+
 	ret
 
 enteringInfoAutoHeatingWorkingTimeKeysLetters:
@@ -569,7 +571,9 @@ enteringInfoAutoHeatingTempControlCursorPosSwitch:
 
 	;в зависимости от положения курсора надо сдвинуть курсор
 
-	lds acc, cursorCoords
+	lds acc, cursorCoords	
+	cpi acc, 4
+	brge enteringInfoAutoHeatingTempControlError
 	ldi ZH, high(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi ZL, low(enteringInfoAutoHeatingTempControlCursorPosTable)
 	ldi acc2, 3

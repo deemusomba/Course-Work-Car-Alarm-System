@@ -16,8 +16,8 @@ modeSettings:
 modeSettingsSubsLabels:
 	ldi ZH, high(modeSettingsSubsLabelsSwitchTable)
 	ldi ZL, low(modeSettingsSubsLabelsSwitchTable)
-	cpi acc, 3;//TODO: добавить в алгоритмы
-	brge modeSettingsSubsLabelsSwitchFix//TODO: добавить в алгоритмы
+	cpi acc, 3;
+	brge modeSettingsSubsLabelsSwitchFix
 	dec acc
 	ldi acc2, 3
 	mul acc, acc2
@@ -27,10 +27,10 @@ modeSettingsSubsLabels:
 modeSettingsSubsLabelsSwitchContinue:
 	ijmp
 
-modeSettingsSubsLabelsSwitchFix://TODO: добавить в алгоритмы
-	call keyBindingsLetterCDecSubMode//TODO: добавить в алгоритмы
+modeSettingsSubsLabelsSwitchFix:
+	call keyBindingsLetterCDecSubMode
 	sbr programFlags, 4
-	jmp modeSettingsSubsLabelsSwitchContinue//TODO: добавить в алгоритмы
+	ret
 
 modeSettingsSubsLabelsSwitchOverflow:
 	inc r31
