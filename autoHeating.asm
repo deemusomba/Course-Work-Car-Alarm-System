@@ -44,9 +44,11 @@ AutoHeatingTimeChecking:
 	add acc, acc2; кол-во часов при прошлом запуске
 	pop acc2; текущее
 	sub acc2, acc; разница
-	brmi AutoHeatingTimeChecking1hFix; 0-23 = -23, час изменился
-	cpi acc2, 1
-	breq AutoHeatingTimeChecking1hFix; 23-22=1, час изменился
+	cpi acc2, 0
+	brne AutoHeatingTimeChecking1hFix
+	;brmi AutoHeatingTimeChecking1hFix; 0-23 = -23, час изменился
+	;cpi acc2, 1
+	;breq AutoHeatingTimeChecking1hFix; 23-22=1, час изменился
 	ldi acc, 0
 	;час не менялся
 AutoHeatingTimeChecking1hFixContinue:
@@ -133,6 +135,5 @@ autoHeatingTurnOff:
 	cbi portD, 0
 	cbr functionsFlags,1
 	ret
-autoHeatingGetTemps:
-	
+
 ;=========================================/Автоподогрев=========================================

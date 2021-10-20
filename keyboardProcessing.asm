@@ -80,7 +80,7 @@ keyBindingsLetterA:
 	mov acc, menuModes
 	andi acc, 0xF0
 	cpi acc, 0
-	breq keyBindingsLetterAEnterFirst;//TODO: добавить в алгоритмы
+	breq keyBindingsLetterAEnterFirst
 	;если выбран режим, то выбрать первый подрежим
 	mov acc, menuModes
 	andi acc, 0x0F
@@ -92,8 +92,8 @@ keyBindingsLetterA:
 	ret
 keyBindingsRet2: ret
 keyBindingsLetterAEnterFirst:
-	ldi menuModes, 0x10//TODO: добавить в алгоритмы
-	ret//TODO: добавить в алгоритмы
+	ldi menuModes, 0x10
+	ret
 keyBindingLetterASubMode:	;при входе в выбор подрежимов, выбрать самый первый из них
 	mov acc, menuModes
 	andi acc, 0xF0
@@ -130,16 +130,16 @@ keyBindingsLetterCDecMode:
 	mov acc, menuModes
 	andi acc, 0xf0
 	cpi acc, 0
-	breq keyBindingsLetterCDecModeLast;//TODO: добавить в алгоритмы
+	breq keyBindingsLetterCDecModeLast
 	subi menuModes, 0x10
 	ret
 
 keyBindingsLetterCDecSubMode:
 	dec menuModes
 	ret
-keyBindingsLetterCDecModeLast://TODO: добавить в алгоритмы
-	ldi menuModes, 0x20//TODO: добавить в алгоритмы
-	ret//TODO: добавить в алгоритмы
+keyBindingsLetterCDecModeLast:
+	ldi menuModes, 0x20
+	ret
 
 keyBindingsLetterD:
 	mov acc, menuModes

@@ -59,6 +59,8 @@ cursorCoords: .BYTE 1;координаты курсора
 	jmp start
 .org 0x18
 	jmp RTT_1msInt; 
+.org 0x22
+	jmp updateSevenSigmDisplayInt
 .org 0x2A
 	jmp ADC_Int
 .org 0x30
@@ -191,7 +193,7 @@ startkeyboardInputBufferInit:
 	
 	;инициализация spi	
 
-	ldi acc, (1<<SPE)|(1<<MSTR);|(1<<SPR0) 
+	ldi acc,(1<<SPIE)|(1<<SPE)|(1<<MSTR);|(1<<SPR0) 
 	out SPCR, acc
 	
 	ldi acc, 0xff; обнуление семисигментного индикатора
@@ -245,10 +247,6 @@ backLoopAfterRTTFlagsScan:
 
 ;=========================================/Фоновый цикл=========================================
 
-updateDisplay:
-	cbr programFlags,4; очистка флага "обновить дисплей"	
-	call updatingDisplay
-	ret
 ;=========================================Клавиатура=========================================
 keyboardScanning:
 	;первоначальная инициализация
@@ -298,12 +296,10 @@ keyboardColumnDetection:
 	ldi ZH, HIGH(KeyTable<<1)
 	
 	mov acc, keyRow
-	push keyRow
 	ldi acc, 4
 	mul acc, keyRow
 	mov acc, r0
 	add r30, acc
-	pop keyRow
 keyRowFound:
 	;строка найдена 
 	mov acc, cpg
@@ -377,8 +373,6 @@ RTT_KeyScanTimer:
 	STS KeyScanTimer, acc
 			
 RTT_ProgrammTimer:
-
-
 	lds acc, RTT_mS
 	inc acc
 	STS RTT_mS, acc
@@ -542,12 +536,11 @@ carScanning:
 	jmp backLoopAfterCarScan
 updateSevenSigmDisplay: ;в acc (r16) находится то, что нужно отобразить
 	out SPDR, acc
-updateSevenSigmDisplayLoop:
-	sbis SPSR, SPIF
-	rjmp updateSevenSigmDisplayLoop
+	ret
+updateSevenSigmDisplayInt:
 	sbi portB, 0
 	cbi portB, 0
-	ret
+	reti
 alarmSoundOn:
 	sbi portD, 1
 	ret
@@ -565,7 +558,7 @@ getTemperature:
 	in acc2, ADCH
 	subi acc2, 1
 	subi acc, 0xDD; -40C
-	brcs getTemperatureBelowZero
+	brcs getTemperatureBelowZero; "занимаем" у старшей части 1
 	jmp getTemperatureBelowZeroContinue
 
 getTemperatureBelowZero:

@@ -1,6 +1,7 @@
 
 ;=========================================Обновление дисплея=========================================
-updatingDisplay:	
+updateDisplay:
+	cbr programFlags,4; очистка флага "обновить дисплей"	
 	LDI R17,(1<<0)
 	RCALL CMD_WR;
 		
@@ -119,8 +120,7 @@ modeMainContinue:
 	ret
 
 modeMainShowAutoheating:
-	LDI		R17,(1<<7)|(0+0x40*1)
-	RCALL	CMD_WR
+	rcall shiftCursorSecondRow
 
 	ldi acc2, '*'
 	RCALL DATA_WR	

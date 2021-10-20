@@ -103,7 +103,6 @@ symToHex:;sym in acc (r16)
 			brlo 	brOther; если меньше кода буквы A, то код введенного символа равен коду для вывода на дисплей				
 			
 			subi 	acc, 'А'
-			;subi acc, -1
 
 			ldi acc2, LOW(displayRecodingTable<<1)
 			mov ZL, acc2
